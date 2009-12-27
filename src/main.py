@@ -29,6 +29,10 @@ def main():
     hwnd = helper.GetMainWindowHandle(4384)
     print hwnd
     
+    winHelper = WindowHelper()
+    hwndList = winHelper.GetByWindowClassName("Greate Voyages Online Game MainFrame")
+    print hwndList
+    
     
 
 

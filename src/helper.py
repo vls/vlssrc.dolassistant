@@ -10,15 +10,13 @@ class ProcessHelper:
         result =  (not flag1) and flag2
         return result
     
-    def callback(self, handle, extra):
-        threadID, procID = win32process.GetWindowThreadProcessId(handle)
-        if ((procID == self.processID) and self.IsMainWindow(handle)):
-            self.mainWindowHandle = handle
+    def callback(self, hwnd, extra):
+        threadID, procID = win32process.GetWindowThreadProcessId(hwnd)
+        #print threadID, procID, hwnd
+        if ((procID == self.processID) and self.IsMainWindow(hwnd)):
+            self.mainWindowHandle = hwnd
             return False
         return True
-
-         
-         
         
     def GetMainWindowHandle(self, processID):
         self.processID = processID
@@ -30,3 +28,23 @@ class ProcessHelper:
                 raise e
             
         return self.mainWindowHandle
+    
+class WindowHelper:
+    def GetByWindowClassName(self, className):
+        self.className = className
+        self.hwndList = []
+        self.mainWindowHandle = 0
+        try:
+            win32gui.EnumWindows(self.classNameCallback, 0)
+        except pywintypes.error as e:
+            if(win32api.GetLastError() != 0):
+                raise e
+            
+        return self.hwndList
+    
+    def classNameCallback(self, hwnd, extra):
+        className = win32gui.GetClassName(hwnd)
+        #print hwnd, className
+        if(className == self.className):
+            self.hwndList.append(hwnd)
+        return True
