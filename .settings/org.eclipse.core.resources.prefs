@@ -1,7 +1,7 @@
-#Mon Dec 28 22:16:57 CST 2009
+#Mon Dec 28 22:41:42 CST 2009
 eclipse.preferences.version=1
 encoding//src/client.py=gbk
 encoding//src/daemon.py=utf-8
 encoding//src/helper.py=utf-8
 encoding//src/main.py=gbk
-encoding//src/ui/mainForm.py=utf-8
+encoding//src/ui/Ui_mainDialog.py=utf-8

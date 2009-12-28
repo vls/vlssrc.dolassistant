@@ -13,7 +13,7 @@ import inspect
 
 from PyQt4 import QtCore, QtGui
         
-from ui.mainForm import *    
+from ui.Ui_mainDialog import *
         
 def main():
     
@@ -28,12 +28,12 @@ def main():
     
     app = QtGui.QApplication(sys.argv)
     window = QtGui.QDialog()
-    ui = Ui_Dialog()
-    ui.setupUi(window)
+    dialog = Ui_mainDialog()
+    dialog.setupUi(window)
     
     window.show()
     sys.exit(app.exec_())
-    #QtCore.QObject.connect(quit, QtCore.SIGNAL("clicked()"), app, QtCore.SLOT("quit()"))
+    
 
     
     

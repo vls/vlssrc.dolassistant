@@ -1,0 +1,15 @@
+
+message Message {
+	
+	required string playerList = 1;
+	
+	required string scriptName = 2;
+	
+	required string paraList = 3;
+	
+	
+	
+	
+	
+	
+}
