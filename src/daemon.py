@@ -1,6 +1,7 @@
 
 import SocketServer
-from data import message_pb2 
+from data.message_pb2 import * 
+from data.returnValue_pb2 import * 
 from datetime import datetime
 
 class ListenTCPHandler(SocketServer.BaseRequestHandler):
@@ -24,7 +25,7 @@ class ListenTCPHandler(SocketServer.BaseRequestHandler):
             read = len(str(self.data))
         
 
-        msg = message_pb2.Message()
+        msg = Message()
         #print "After read..."
         #print "read = %d, total = %d" % (read,total)
         #print self.data
@@ -36,7 +37,13 @@ class ListenTCPHandler(SocketServer.BaseRequestHandler):
         list = eval(msg.playerList)
         paraList = eval(msg.paraList)
         
-        execScript(msg.scriptName, paraList)
+        rt = execScript(msg.scriptName, paraList)
+        
+        sstr = rt.SerializeToString()
+        
+        data = "%d,%s" % (len(sstr), sstr)
+        
+        self.request.send(data)
         
         
 
@@ -57,7 +64,12 @@ def stop():
 def execScript(scriptName, paraList):
     module = __import__('scripts')
     func = getattr(module, scriptName)    
-    apply(func, paraList)
+    retvalue = func(*paraList)
+    
+    rt = ReturnValue()
+    rt.value = repr(retvalue)
+    
+    return rt
     
 if __name__ == "__main__":
     start()
