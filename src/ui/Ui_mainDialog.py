@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'mainDialog.ui'
 #
-# Created: Tue Dec 29 19:52:03 2009
+# Created: Tue Dec 29 19:56:55 2009
 #      by: PyQt4 UI code generator 4.6.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -86,6 +86,7 @@ class Ui_mainDialog(object):
         QtCore.QObject.connect(self.btnAdd, QtCore.SIGNAL("clicked()"), mainDialog.addItem)
         QtCore.QObject.connect(self.btnDelete, QtCore.SIGNAL("clicked()"), mainDialog.deleteItem)
         QtCore.QObject.connect(self.btnSave, QtCore.SIGNAL("clicked()"), mainDialog.saveItems)
+        QtCore.QObject.connect(self.btnRefresh, QtCore.SIGNAL("clicked()"), mainDialog.getPlayerList)
         QtCore.QMetaObject.connectSlotsByName(mainDialog)
 
     def retranslateUi(self, mainDialog):

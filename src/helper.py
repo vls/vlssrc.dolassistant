@@ -1,6 +1,8 @@
 
 import pywintypes
-from win32 import *
+from win32 import win32gui, win32process, win32api, win32con
+import os
+import winnt
 
 class ProcessHelper:
     
@@ -30,8 +32,11 @@ class ProcessHelper:
             
         return self.mainWindowHandle
     
+    
+        
+    
 class WindowHelper:
-    def GetByWindowClassName(self, className):
+    def getWindowListByClassName(self, className):
         self.className = className
         self.hwndList = []
         self.mainWindowHandle = 0
@@ -49,3 +54,19 @@ class WindowHelper:
         if(className == self.className):
             self.hwndList.append(hwnd)
         return True
+    
+    
+    def getProcListByClassName(self, className):
+        
+        hwndList = self.getWindowListByClassName(className)
+        
+        procList = []
+        
+        for hwnd in hwndList:
+            threadID, processID = win32process.GetWindowThreadProcessId(hwnd) 
+            hProc = win32api.OpenProcess(win32con.PROCESS_ALL_ACCESS, 0, processID)
+            procList.append(hProc)
+            
+        return procList
+        
+        

@@ -268,10 +268,27 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>btnRefresh</sender>
+   <signal>clicked()</signal>
+   <receiver>mainDialog</receiver>
+   <slot>getPlayerList()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>61</x>
+     <y>224</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>212</x>
+     <y>224</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>addItem()</slot>
   <slot>deleteItem()</slot>
   <slot>saveItems()</slot>
+  <slot>getPlayerList()</slot>
  </slots>
 </ui>

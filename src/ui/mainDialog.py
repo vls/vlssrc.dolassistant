@@ -1,4 +1,4 @@
-
+# -*- coding: gbk -*-
 from PyQt4.QtGui import QMainWindow
 from PyQt4.QtGui import QAbstractItemView
 from PyQt4.QtCore import Qt
@@ -7,8 +7,14 @@ from Ui_mainDialog import Ui_mainDialog
 import os
 import codecs
 import scripts
+import types
+from client import client
 
 ipTxt = "ip.txt"
+
+class playerListHandler(client.BaseHandler):
+    def handle(self, obj):
+        pass
 
 class mainDialog(QMainWindow, Ui_mainDialog):
     def __init__(self, parent = None):
@@ -72,26 +78,45 @@ class mainDialog(QMainWindow, Ui_mainDialog):
         row = 0
         print self.tblScript.rowCount()
         for ob in dir(scriptMod):
-            if (not ob.startswith('__')):
+            if (not ob.startswith('__') and type(getattr(scriptMod, ob)) == types.FunctionType):
                 
                 self.tblScript.insertRow(row)
+                doc = getattr(scriptMod,ob).__doc__
                 
-                group = (ob, getattr(scriptMod,"test").__doc__)
+                
+                docStr = ""
+                if(doc != None):
+                    print doc
+                    print doc.decode('gbk')
+                    doc = doc.decode('gbk')
+                    
+                   
+                    #docStr = doc
+                    #print dir(QtGui.QApplication)
+                    docStr = QtGui.QApplication.translate("mainDialog", doc, None, QtGui.QApplication.UnicodeUTF8)
+                
+                group = (ob, docStr)
                 print group
                 
                 item = QtGui.QTableWidgetItem()
                 
-                item.setText(str(group[0]))
+                item.setText(group[0])
                 
                 self.tblScript.setItem(row, 0, item)
                 
                 item = QtGui.QTableWidgetItem()
-                item.setText(str(group[1]))
+                item.setText(group[1])
                 self.tblScript.setItem(row, 1, item)
                 
                 row += 1
-                print self.tblScript.rowCount()
+                #print self.tblScript.rowCount()
+                
+                
+    def getPlayerList(self):
+        cl = client()
         
+
+
         
         
 
