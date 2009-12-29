@@ -13,7 +13,9 @@ import inspect
 
 from PyQt4 import QtCore, QtGui
         
-from ui.Ui_mainDialog import *
+
+from ui.mainDialog import mainDialog
+from ui.Ui_mainDialog import Ui_mainDialog
         
 def main():
     
@@ -27,9 +29,15 @@ def main():
                 serverMode = True
     
     app = QtGui.QApplication(sys.argv)
-    window = QtGui.QDialog()
+    #window = QtGui.QDialog()
+    window = mainDialog()
     dialog = Ui_mainDialog()
+    
+    
+    
     dialog.setupUi(window)
+    
+    
     
     window.show()
     sys.exit(app.exec_())

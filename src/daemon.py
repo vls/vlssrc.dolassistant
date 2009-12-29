@@ -1,11 +1,16 @@
-
+""" Message Listening Daemon class 
+"""
 import SocketServer
-from data.message_pb2 import * 
-from data.returnValue_pb2 import * 
+from data.message_pb2 import Message 
+from data.returnValue_pb2 import ReturnValue 
 from datetime import datetime
 
 class ListenTCPHandler(SocketServer.BaseRequestHandler):
+    """ a handler to listen, process, send back 
+    """
     def handle(self):
+        """ overriding the function of super class
+        """
         self.data = ""
         read = 0
         total = 0
@@ -34,7 +39,7 @@ class ListenTCPHandler(SocketServer.BaseRequestHandler):
         print datetime.now()
         print msg
         
-        list = eval(msg.playerList)
+        plList = eval(msg.playerList)
         paraList = eval(msg.paraList)
         
         rt = execScript(msg.scriptName, paraList)
