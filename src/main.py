@@ -8,10 +8,10 @@ from helper import *
 import getopt
 import client
 import sys
-
 import inspect
 
 from PyQt4 import QtCore, QtGui
+from PyQt4.QtCore import Qt, QSize
         
 
 from ui.mainDialog import mainDialog
@@ -30,16 +30,42 @@ def main():
     
     app = QtGui.QApplication(sys.argv)
     #window = QtGui.QDialog()
+    
     window = mainDialog()
-    dialog = Ui_mainDialog()
+    window.setFixedSize(QSize(424,444))
+    #===========================================================================
+    # item = QtGui.QListWidgetItem(window.ipList)
+    # item.setText("11")
+    # 
+    # item = window.ipList.item(0)
+    # item1 = window.ipList.item(1)
+    # print item.flags().__int__()
+    # print '-----'
+    # item.setFlags(item.flags() | Qt.ItemFlags(Qt.ItemIsEditable))
+    # print item.flags().__int__()
+    # 
+    # print int(window.ipList.editTriggers())
+    #===========================================================================
+     
     
+
     
-    
-    dialog.setupUi(window)
-    
-    
+    #item.setFlags(item.flags() | Qt.ItemFlags(Qt.ItemIsEditable))
     
     window.show()
+    
+    #===========================================================================
+    # ipList = QtGui.QListWidget()
+    # item = QtGui.QListWidgetItem(ipList)
+    # item.setText("11")
+    # item.setFlags(item.flags() | Qt.ItemFlags(Qt.ItemIsEditable))
+    # item = QtGui.QListWidgetItem(ipList)
+    # item.setText("22")
+    # 
+    # ipList.show()
+    #===========================================================================
+    
+    
     sys.exit(app.exec_())
     
 
