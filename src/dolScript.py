@@ -61,7 +61,19 @@ def getHP(proc):
     win32.ReadProcessMemory(proc.handle, addr.HP, byref(buf), bufferSize, byref(bytesRead))
     return buf.value
     
-    
+def getLocation(proc):
+    buf = c_int(0)
+    bytesRead = c_ulong(0)
+    bufferSize = 4
+    win32.ReadProcessMemory(proc.handle, 0xB6FFE0, byref(buf), bufferSize, byref(bytesRead))
+    address = buf.value + 4
+    print buf.value
+    print address
+    nameLength = 3
+    buf = c_wchar_p(' ' * nameLength)
+    bufferSize = nameLength
+    win32.ReadProcessMemory(proc.handle, address, buf, bufferSize, byref(bytesRead))
+    print buf.value
    
                             
     
@@ -71,5 +83,7 @@ if __name__ == "__main__":
      dolProcList = procHelper.getProcListByClassName(dolClassName)
      proc = dolProcList[0]
      print getRoleName(proc)
+     print getHP(proc)
+     getLocation(proc)
      
     
