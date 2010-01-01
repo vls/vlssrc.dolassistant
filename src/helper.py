@@ -1,13 +1,13 @@
 
 import pywintypes
-from win32 import win32gui, win32process, win32api, win32con
+import win32gui, win32process, win32api, win32con
 import os
 import winnt
 
 class ProcessHelper:
     
     
-    def IsMainWindow(self, handle):
+    def isMainWindow(self, handle):
         flag1 = (win32gui.GetWindow(handle, 4) != 0)
         flag2 = win32gui.IsWindowVisible(handle)
         result =  (not flag1) and flag2
@@ -16,12 +16,12 @@ class ProcessHelper:
     def callback(self, hwnd, extra):
         threadID, procID = win32process.GetWindowThreadProcessId(hwnd)
         #print threadID, procID, hwnd
-        if ((procID == self.processID) and self.IsMainWindow(hwnd)):
+        if ((procID == self.processID) and self.isMainWindow(hwnd)):
             self.mainWindowHandle = hwnd
             return False
         return True
         
-    def GetMainWindowHandle(self, processID):
+    def getMainWindowHandle(self, processID):
         self.processID = processID
         self.mainWindowHandle = 0
         try:
@@ -32,6 +32,9 @@ class ProcessHelper:
             
         return self.mainWindowHandle
     
+    def getHwndByProc(self, proc):
+        pid = win32process.GetProcessId(proc)
+        return self.getMianWindowHandle(pid)
     
         
     
@@ -48,6 +51,7 @@ class WindowHelper:
             
         return self.hwndList
     
+    
     def classNameCallback(self, hwnd, extra):
         className = win32gui.GetClassName(hwnd)
         #print hwnd, className
@@ -61,12 +65,17 @@ class WindowHelper:
         hwndList = self.getWindowListByClassName(className)
         
         procList = []
-        
+        #print hwndList
         for hwnd in hwndList:
             threadID, processID = win32process.GetWindowThreadProcessId(hwnd) 
             hProc = win32api.OpenProcess(win32con.PROCESS_ALL_ACCESS, 0, processID)
             procList.append(hProc)
             
         return procList
+    @staticmethod
+    def getProcByHwnd(self, hwnd):
+        threadID, processID = win32process.GetWindowThreadProcessId(hwnd) 
+        hProc = win32api.OpenProcess(win32con.PROCESS_ALL_ACCESS, 0, processID)
+        return hProc
         
         
