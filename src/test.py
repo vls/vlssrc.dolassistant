@@ -11,9 +11,10 @@ def main():
     hwndList = dolScript.getDolHwndList()
     #pyqmacro.dllHelp('BGKM5.dll')
     
-    mxy = (1152 - 171 + 36 /2 , 864 - 251 + 20 /2)
+    
     hwnd = max(hwndList)
-    pyqmacro.invoke('BGKM5.dll','LClick',[hwnd, 0, 0])
+    mxy = dolScript.getMousePos(hwnd, 0, 0)
+    pyqmacro.invoke('BGKM5.dll','LClick',[hwnd, mxy[0], mxy[1]])
     
     
     print hwndList

@@ -7,6 +7,7 @@ from dolAddr import ADDR
 from enum import QuickKey, ShipState, Sea
 import time
 import math
+import win32gui
 
 dolClassName = "Greate Voyages Online Game MainFrame"
 
@@ -226,8 +227,19 @@ def getSeaFollow(proc):
     return getInt(proc, ADDR.SEA_FOLLOW)
 
 def getMousePos(hwnd, x, y):
-    #if(x < 0 or x > 4 or )
-    pass
+    if(x < 0 or x > 4 or y < 0 or y > 4):
+        return None
+    
+    (left, top, right, bottom) = win32gui.GetClientRect(hwnd)
+    
+    button = (36,20)
+    gap = (4,4)
+    rect = (-171, -251)
+    
+    pos = (right + rect[0] + button[0] / 2 + x * (button[0]+gap[0]),
+           bottom + rect[1] + button[1] / 2 + y * (button[1]+gap[0]))
+    return pos
+    
     
             
 
@@ -284,11 +296,12 @@ if __name__ == "__main__":
         print '角度 = %s' % (getAngle(pro))
         print 'TAB对象 = %s<end>' % (getTabName(pro))
         print '陆地跟随 = %d' % (getLandFollow(pro))
-#        while(True):
+        while(True):
 #            print '海洋坐标: x=%.3f, y=%.3f' % getSeaPos(pro, (0x400, 0xbff))
 #            print '陆地坐标: x=%.3f, y=%.3f' % getLandPos(pro)
-#            print '场景切换?: %s' % (isSceneChange(pro))
-#            time.sleep(0.01)
+            print '场景切换?: %s' % (isSceneChange(pro))
+            print '忙? %s' % (isBusy(pro))
+            time.sleep(0.01)
             
     
     
