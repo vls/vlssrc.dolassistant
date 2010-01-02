@@ -12,7 +12,7 @@ class ADDR:
     MOUSE_BUSY = 0xB4D6A0 + OFFSET                  #鼠标是否为漏斗状  #B6B7D0
     TAB_OBJTYPE = MOUSE_BUSY + 0x9c - 0x78          #TAB对象类型
     TAB_ID = TAB_OBJTYPE + 0xA0 - 0x9c              #TAB对象ID
-    
+    TAB_NUM = 0xB6B848                              #TAB选择框按钮数目
     SCENE_CHANGE = 0xB4e170 + OFFSET                #切换场景
     
     QUICK_KEY = 0xB4E8E8 + OFFSET + 0x1440          #快捷键

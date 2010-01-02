@@ -1,6 +1,6 @@
 # -*- coding: gbk -*-
-import dolScript
-import win32
+from dol import dolScript
+import w32
 import helper
 
 

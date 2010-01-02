@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import sys
+sys.path.append("..")
 from w32 import w32
 from _global import MyList
 import helper
@@ -227,6 +229,10 @@ def getSeaFollow(proc):
     return getInt(proc, ADDR.SEA_FOLLOW)
 
 def getMousePos(hwnd, x, y):
+    '''获取鼠标点击的位置，用于TAB对话框
+        (返回值为Client坐标，非Window坐标)
+        return (x,y)
+    '''
     if(x < 0 or x > 4 or y < 0 or y > 4):
         return None
     
@@ -239,6 +245,13 @@ def getMousePos(hwnd, x, y):
     pos = (right + rect[0] + button[0] / 2 + x * (button[0]+gap[0]),
            bottom + rect[1] + button[1] / 2 + y * (button[1]+gap[0]))
     return pos
+
+def getTabNum(proc):
+    '''获取选择框的按钮数目(包含关闭按钮)
+        如果无打开TAB选择框，(包括tab选中但未按回车)
+    return int
+    '''
+    return getInt(proc, ADDR.TAB_NUM)
     
     
             

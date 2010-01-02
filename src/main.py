@@ -2,7 +2,7 @@
 
 from dll import *
 from ctypes import *
-from win32 import *
+from w32 import *
 import pyqmacro
 from helper import *
 import getopt
