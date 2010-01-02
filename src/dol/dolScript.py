@@ -3,7 +3,8 @@ from w32 import w32
 from _global import MyList
 import helper
 from ctypes import *
-from dolAddr import ADDR, QuickKey, ShipState
+from dolAddr import ADDR
+from enum import QuickKey, ShipState, Sea
 import time
 import math
 
@@ -211,6 +212,22 @@ def getTabName(proc):
         return ''
     else:
         return ''
+
+def getLandFollow(proc):
+    '''获取陆地跟随的ID
+        return int
+    '''
+    return getInt(proc, ADDR.LAND_FOLLOW)
+
+def getSeaFollow(proc):
+    '''获取海洋跟随的ID
+        return int
+    '''
+    return getInt(proc, ADDR.SEA_FOLLOW)
+
+def getMousePos(hwnd, x, y):
+    #if(x < 0 or x > 4 or )
+    pass
     
             
 
@@ -266,6 +283,7 @@ if __name__ == "__main__":
         print '快捷键 = %s' % (getQuickKey(pro))
         print '角度 = %s' % (getAngle(pro))
         print 'TAB对象 = %s<end>' % (getTabName(pro))
+        print '陆地跟随 = %d' % (getLandFollow(pro))
 #        while(True):
 #            print '海洋坐标: x=%.3f, y=%.3f' % getSeaPos(pro, (0x400, 0xbff))
 #            print '陆地坐标: x=%.3f, y=%.3f' % getLandPos(pro)
