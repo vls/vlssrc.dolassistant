@@ -9,6 +9,6 @@
 <pydev_property name="org.python.pydev.PYTHON_PROJECT_INTERPRETER">Default</pydev_property>
 <pydev_pathproperty name="org.python.pydev.PROJECT_EXTERNAL_SOURCE_PATH">
 <path>I:\document\My Documents\Visual Studio 2008\Projects\Cpp\pymemex\Debug</path>
-<path>I:\document\My Documents\Visual Studio 2008\Projects\Cpp\pyqmacro\Release</path>
+<path>I:\document\My Documents\Visual Studio 2008\Projects\Cpp\pyqmacro\Debug</path>
 </pydev_pathproperty>
 </pydev_project>

@@ -1,24 +1,55 @@
-# -*- coding: gbk -*-
+# -*- coding: utf-8 -*-
 from dol import dolScript
 import w32
 import helper
+from helper import WindowHelper, ProcessHelper
+import time
+import win32con
+import pyqmacro
+import dll
 
+ds = dolScript
+
+def __dowhile(func, args, interval = 0.1):
+    while(func(*args)):
+        time.sleep(interval)
 
 def test(st,st2):
     print 'Test OK!!! String = %s / %s' % (st,st2)
     return None
 
 def test2():
+    '''æ³¨é‡Š
+    '''
     print 'Test2 OK!!!'
     
+def testHwnd(hwnd):
+    '''æµ‹è¯•'''
+    print hwnd
     
-def getRoleNameList():
-    """»ñÈ¡µ±Ç°»úÆ÷µÄËùÓĞ´óº½º£µÄ½ÇÉ«Ãû
-    """
-    nameList = []
-    procHelper = helper.WindowHelper()
-    dolProcList = procHelper.getProcListByClassName(dolScript.dolClassName)
-    for proc in dolProcList:
-        nameList.append(dolScript.getRoleName(proc))
-        
-    return nameList
+def follow(hwnd):
+    '''è·ŸéšTD
+    '''
+    proc = WindowHelper.getProcByHwnd(hwnd)
+    
+    party = ds.getParty(proc)
+    
+    if(len(party) == 0):
+        print "%d æ— ç»„é˜Ÿï¼" % (hwnd)
+        return
+    
+    myid = ds.getPCID(proc)
+    if(myid == party[0]):
+        print "æˆ‘æ˜¯é˜Ÿé•¿"
+        return
+    name = ds.getRoleName(proc)
+    __dowhile(lambda p: not ds.isNormal(p), [proc])
+    
+    tabid = ds.getTabId(proc)
+    while(tabid == 0 or tabid != party[0]):
+        print "[%s]: æ‰¾å•Šæ‰¾,è¦æ‰¾%d, æ‰¾åˆ°%d" % (name, party[0], tabid)
+        dll.Key("KeyClick", hwnd, 9)# TAB
+        time.sleep(0.01)
+        tabid = ds.getTabId(proc)
+        print tabid
+    

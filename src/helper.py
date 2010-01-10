@@ -72,8 +72,9 @@ class WindowHelper:
             procList.append(hProc)
             
         return procList
+    
     @staticmethod
-    def getProcByHwnd(self, hwnd):
+    def getProcByHwnd(hwnd):
         threadID, processID = win32process.GetWindowThreadProcessId(hwnd) 
         hProc = win32api.OpenProcess(win32con.PROCESS_ALL_ACCESS, 0, processID)
         return hProc

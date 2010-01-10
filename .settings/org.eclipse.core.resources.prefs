@@ -1,12 +1,15 @@
-#Sat Jan 02 16:54:55 CST 2010
+#Sun Jan 10 14:07:33 CST 2010
 eclipse.preferences.version=1
 encoding//src/client.py=gbk
 encoding//src/daemon.py=utf-8
 encoding//src/dol/dolAddr.py=utf-8
 encoding//src/dol/dolScript.py=utf-8
+encoding//src/dol/enum.py=utf-8
 encoding//src/helper.py=utf-8
-encoding//src/main.py=gbk
-encoding//src/scripts.py=gbk
+encoding//src/main.py=utf-8
+encoding//src/scripts.py=utf-8
 encoding//src/test.py=gbk
 encoding//src/ui/Ui_mainDialog.py=utf-8
-encoding//src/ui/mainDialog.py=gbk
+encoding//src/ui/Ui_untitled.py=utf-8
+encoding//src/ui/mainDialog.py=utf-8
+encoding//src/ui/mainDialogBL.py=utf-8

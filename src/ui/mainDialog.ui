@@ -38,46 +38,6 @@
     <attribute name="title">
      <string>脚本</string>
     </attribute>
-    <widget class="QTableWidget" name="tblPlayer">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>10</y>
-       <width>369</width>
-       <height>165</height>
-      </rect>
-     </property>
-     <property name="editTriggers">
-      <set>QAbstractItemView::NoEditTriggers</set>
-     </property>
-     <property name="selectionBehavior">
-      <enum>QAbstractItemView::SelectRows</enum>
-     </property>
-     <property name="showGrid">
-      <bool>true</bool>
-     </property>
-     <property name="gridStyle">
-      <enum>Qt::SolidLine</enum>
-     </property>
-     <property name="sortingEnabled">
-      <bool>true</bool>
-     </property>
-     <column>
-      <property name="text">
-       <string>name</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>ip</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>hwnd</string>
-      </property>
-     </column>
-    </widget>
     <widget class="QTableWidget" name="tblScript">
      <property name="geometry">
       <rect>
@@ -88,7 +48,13 @@
       </rect>
      </property>
      <property name="editTriggers">
-      <set>QAbstractItemView::NoEditTriggers</set>
+      <set>QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed</set>
+     </property>
+     <property name="selectionMode">
+      <enum>QAbstractItemView::SingleSelection</enum>
+     </property>
+     <property name="selectionBehavior">
+      <enum>QAbstractItemView::SelectRows</enum>
      </property>
      <property name="sortingEnabled">
       <bool>true</bool>
@@ -125,7 +91,7 @@
     <widget class="QPushButton" name="btnSaveScript">
      <property name="geometry">
       <rect>
-       <x>10</x>
+       <x>110</x>
        <y>360</y>
        <width>80</width>
        <height>25</height>
@@ -159,6 +125,50 @@
      </property>
      <property name="value">
       <number>0</number>
+     </property>
+    </widget>
+    <widget class="QTableWidget" name="tblPlayer">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>361</width>
+       <height>161</height>
+      </rect>
+     </property>
+     <property name="editTriggers">
+      <set>QAbstractItemView::NoEditTriggers</set>
+     </property>
+     <property name="selectionBehavior">
+      <enum>QAbstractItemView::SelectRows</enum>
+     </property>
+     <column>
+      <property name="text">
+       <string>name</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>hwnd</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>id</string>
+      </property>
+     </column>
+    </widget>
+    <widget class="QPushButton" name="btnRefreshScript">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>360</y>
+       <width>80</width>
+       <height>25</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>刷新</string>
      </property>
     </widget>
    </widget>
@@ -214,6 +224,51 @@
        <height>351</height>
       </rect>
      </property>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="tab_3">
+    <attribute name="title">
+     <string>Page</string>
+    </attribute>
+    <widget class="QTableWidget" name="tblNetPlayer">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>20</y>
+       <width>369</width>
+       <height>165</height>
+      </rect>
+     </property>
+     <property name="editTriggers">
+      <set>QAbstractItemView::NoEditTriggers</set>
+     </property>
+     <property name="selectionBehavior">
+      <enum>QAbstractItemView::SelectRows</enum>
+     </property>
+     <property name="showGrid">
+      <bool>true</bool>
+     </property>
+     <property name="gridStyle">
+      <enum>Qt::SolidLine</enum>
+     </property>
+     <property name="sortingEnabled">
+      <bool>true</bool>
+     </property>
+     <column>
+      <property name="text">
+       <string>name</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>ip</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>hwnd</string>
+      </property>
+     </column>
     </widget>
    </widget>
   </widget>
@@ -272,11 +327,59 @@
    <sender>btnRefresh</sender>
    <signal>clicked()</signal>
    <receiver>mainDialog</receiver>
-   <slot>getPlayerList()</slot>
+   <slot>setPlayerList()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>61</x>
      <y>224</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>212</x>
+     <y>224</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btnExec</sender>
+   <signal>clicked()</signal>
+   <receiver>mainDialog</receiver>
+   <slot>execScript()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>312</x>
+     <y>412</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>212</x>
+     <y>224</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btnRefreshScript</sender>
+   <signal>clicked()</signal>
+   <receiver>mainDialog</receiver>
+   <slot>refreshScript()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>61</x>
+     <y>404</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>212</x>
+     <y>224</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btnSaveScript</sender>
+   <signal>clicked()</signal>
+   <receiver>mainDialog</receiver>
+   <slot>saveScript()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>161</x>
+     <y>404</y>
     </hint>
     <hint type="destinationlabel">
      <x>212</x>
@@ -289,6 +392,9 @@
   <slot>addItem()</slot>
   <slot>deleteItem()</slot>
   <slot>saveItems()</slot>
-  <slot>getPlayerList()</slot>
+  <slot>setPlayerList()</slot>
+  <slot>execScript()</slot>
+  <slot>saveScript()</slot>
+  <slot>refreshScript()</slot>
  </slots>
 </ui>

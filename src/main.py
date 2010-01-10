@@ -1,4 +1,4 @@
-# -*- coding: gbk -*-
+# -*- coding: utf-8 -*-
 
 from dll import *
 from ctypes import *
@@ -13,7 +13,7 @@ import inspect
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import Qt, QSize
         
-
+import ui
 from ui.mainDialog import mainDialog
 from ui.Ui_mainDialog import Ui_mainDialog
         
@@ -29,8 +29,13 @@ def main():
                 serverMode = True
     
     app = QtGui.QApplication(sys.argv)
-    #window = QtGui.QDialog()
-    
+    #===========================================================================
+    # window = QtGui.QMainWindow()
+    # uii = Ui_mainDialog()
+    # 
+    # uii.setupUi(window)
+    #===========================================================================
+
     window = mainDialog()
     window.setFixedSize(QSize(424,444))
     #===========================================================================
@@ -46,8 +51,9 @@ def main():
     # 
     # print int(window.ipList.editTriggers())
     #===========================================================================
-     
-    
+
+
+
 
     
     #item.setFlags(item.flags() | Qt.ItemFlags(Qt.ItemIsEditable))
@@ -65,15 +71,13 @@ def main():
     # ipList.show()
     #===========================================================================
     
-    
+   
     sys.exit(app.exec_())
-    
-
     
     
     
     #===========================================================================
-    # print "Hello world•r´ú"
+    # print "Hello worldï¿½rï¿½ï¿½"
     # #user32.MessageBoxA(0, 'Ctypes is cool!', 'Ctypes', 0)
     # 
     # 

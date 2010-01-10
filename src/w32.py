@@ -8,10 +8,13 @@ from ctypes import *
 class w32:
     
  
-    kernel32 = windll.LoadLibrary("kernel32.dll") 
+    kernel32 = windll.kernel32 
     ReadProcessMemory = kernel32.ReadProcessMemory 
     WriteProcessMemory = kernel32.WriteProcessMemory 
     OpenProcess = kernel32.OpenProcess 
+    
+    user32 = windll.user32
+    
     
     @staticmethod
     def ReadMemEx(proc, addrList, bufAddr, bufferSize, readAddr):

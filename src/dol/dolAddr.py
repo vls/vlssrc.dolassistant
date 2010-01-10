@@ -16,7 +16,7 @@ class ADDR:
     SCENE_CHANGE = 0xB4e170 + OFFSET                #切换场景
     
     QUICK_KEY = 0xB4E8E8 + OFFSET + 0x1440          #快捷键
-    #PC_STATE = 0xB6F97C				# =1 ==正常？ 还有断线
+    PC_STATE = 0xB6F97C				# 1 =正常, 0 =断线
     
     
     

@@ -184,6 +184,12 @@ def getTabAddr(proc, id, addr):
         return getInt(proc, addr + 4)
     else:
         return 0
+
+def getTabId(proc):
+    '''返回TAB所指对象的ID
+    return int
+    '''
+    return getInt(proc, ADDR.TAB_ID)
         
 def getTabName(proc):
     '''返回TAB所指对象名称
@@ -253,7 +259,11 @@ def getTabNum(proc):
     '''
     return getInt(proc, ADDR.TAB_NUM)
     
-    
+def getPCID(proc):
+    '''获取玩家ID
+    return int
+    '''
+    return getInt(proc, ADDR.PC_ID)
             
 
 def isSceneChange(proc):
@@ -268,6 +278,18 @@ def isBusy(proc):
         return bool
     '''
     return getInt(proc,ADDR.MOUSE_BUSY) != 0
+
+def isOnline(proc):
+    '''是否在线
+    return bool
+    '''
+    return getInt(proc, ADDR.PC_STATE) == 1
+
+def isNormal(proc):
+    '''是否正常，可执行命令的状态
+    == 在线 && !鼠标忙 && !切换场景
+    '''
+    return isOnline(proc) and (not isBusy(proc)) and (not isSceneChange(proc)) 
 
 def selfTest(proc):
     '''基本信息自检
@@ -287,6 +309,9 @@ def selfTest(proc):
         index += 1
         
 def getDolHwndList():
+    '''获取所有大航海OL的窗口句柄
+    return []
+    '''
     winHelper = helper.WindowHelper()
     return winHelper.getWindowListByClassName(dolClassName)
     
@@ -309,12 +334,13 @@ if __name__ == "__main__":
         print '角度 = %s' % (getAngle(pro))
         print 'TAB对象 = %s<end>' % (getTabName(pro))
         print '陆地跟随 = %d' % (getLandFollow(pro))
-        while(True):
+        print '正常 = %s' % (isNormal(pro))
+#        while(True):
 #            print '海洋坐标: x=%.3f, y=%.3f' % getSeaPos(pro, (0x400, 0xbff))
 #            print '陆地坐标: x=%.3f, y=%.3f' % getLandPos(pro)
-            print '场景切换?: %s' % (isSceneChange(pro))
-            print '忙? %s' % (isBusy(pro))
-            time.sleep(0.01)
+#            print '场景切换?: %s' % (isSceneChange(pro))
+            #print '忙? %s' % (isBusy(pro))
+#            time.sleep(0.01)
             
     
     
