@@ -35,17 +35,30 @@ class mainDialog(QMainWindow, Ui_mainDialog):
     ipTxt = "ip.txt"
     keyTxt = "key.txt"
     
+    def write(self, s):
+        self.txt.appendPlainText(s.rstrip(os.linesep))
+    
     def __init__(self, parent = None):
         
         
         QMainWindow.__init__(self, parent)
         self.setupUi(self)
+        
+        self.stdout_ = sys.stdout
+        #sys.stdout = self
+        
+        
         self.loadItems()
         self.loadScripts()
         self.pool = ThreadPool(6)
         self.keyDict = {}
         self.loadKey(self.keyTxt)
         self.autoRegKey()
+        
+        
+        
+        self.txt.appendPlainText("123")
+        self.txt.appendPlainText("123456")
         #w32.user32.RegisterHotKey(self.winId().__int__(), 5555, win32con.MOD_ALT, ord("1"))
         
         #print "reg = %d" % ( w32.user32.RegisterHotKey(self.winId().__int__(), 4444, win32con.MOD_WIN, win32con.VK_F3))
@@ -217,21 +230,37 @@ class mainDialog(QMainWindow, Ui_mainDialog):
         else:
             module = __import__('scripts')
         func = getattr(module, funcName)
-        args, varargs, varkw, defaults = inspect.getargspec(func)
-        if (len(args) != 1):
-            return
-        
+        args, varargs, varkw, defaults = inspect.getargspec(func)        
         
         hwndList = self.getPlayerHwndList()
         
         if(len(hwndList) == 0):
-            MessageBox(0, "请选择要发送命令的脚本", "", 0)
+            MessageBox(0, "请选择要发送命令的窗口", "", 0)
+        
+
+        prefunc = None
+        try:
+            prefunc = getattr(module, "__%s_pre" % (funcName))
+        except AttributeError as e:
+            pass
+            
+        if(prefunc != None):
+            flag, preargs = prefunc(self)
+            
+        if(not flag):
+            return
         
         requests = []
+        
         for hwnd in hwndList:
-            requests.extend(
-                            makeRequests(func, [hwnd])
-            )
+            if(prefunc != None):
+                preargs.insert(0, hwnd)
+                print preargs
+                re = WorkRequest(func, preargs)
+                requests.append(re)
+                
+            else:
+                requests.append(WorkRequest(func, [hwnd]))
             
         for request in requests:
             self.pool.putRequest(request)
@@ -344,6 +373,4 @@ class mainDialog(QMainWindow, Ui_mainDialog):
         
 
         
-    
-
     

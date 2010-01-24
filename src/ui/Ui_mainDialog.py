@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'mainDialog.ui'
 #
-# Created: Mon Jan 04 14:30:51 2010
+# Created: Sat Jan 23 22:19:17 2010
 #      by: PyQt4 UI code generator 4.6.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -12,7 +12,7 @@ from PyQt4 import QtCore, QtGui
 class Ui_mainDialog(object):
     def setupUi(self, mainDialog):
         mainDialog.setObjectName("mainDialog")
-        mainDialog.resize(425, 450)
+        mainDialog.resize(419, 450)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -22,6 +22,15 @@ class Ui_mainDialog(object):
         self.tabWidget = QtGui.QTabWidget(mainDialog)
         self.tabWidget.setGeometry(QtCore.QRect(10, 10, 401, 431))
         self.tabWidget.setObjectName("tabWidget")
+        self.tab_4 = QtGui.QWidget()
+        self.tab_4.setObjectName("tab_4")
+        self.txt = QtGui.QPlainTextEdit(self.tab_4)
+        self.txt.setGeometry(QtCore.QRect(0, 0, 391, 401))
+        self.txt.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.txt.setUndoRedoEnabled(False)
+        self.txt.setReadOnly(True)
+        self.txt.setObjectName("txt")
+        self.tabWidget.addTab(self.tab_4, "")
         self.tab = QtGui.QWidget()
         self.tab.setObjectName("tab")
         self.tblScript = QtGui.QTableWidget(self.tab)
@@ -115,6 +124,7 @@ class Ui_mainDialog(object):
 
     def retranslateUi(self, mainDialog):
         mainDialog.setWindowTitle(QtGui.QApplication.translate("mainDialog", "控制端", None, QtGui.QApplication.UnicodeUTF8))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_4), QtGui.QApplication.translate("mainDialog", "信息", None, QtGui.QApplication.UnicodeUTF8))
         self.tblScript.setSortingEnabled(True)
         self.tblScript.horizontalHeaderItem(0).setText(QtGui.QApplication.translate("mainDialog", "name", None, QtGui.QApplication.UnicodeUTF8))
         self.tblScript.horizontalHeaderItem(1).setText(QtGui.QApplication.translate("mainDialog", "desc", None, QtGui.QApplication.UnicodeUTF8))

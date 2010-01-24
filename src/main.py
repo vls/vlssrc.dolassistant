@@ -19,6 +19,8 @@ from ui.Ui_mainDialog import Ui_mainDialog
         
 def main():
     
+    
+    
     opts, args = getopt.getopt(sys.argv[1:], "m:")
     
     for op, arg in opts:
