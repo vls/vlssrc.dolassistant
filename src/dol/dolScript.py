@@ -49,7 +49,45 @@ def getShort(proc, addr):
     bufferSize = 2    
     w32.ReadProcessMemory(proc.handle, addr, byref(buf), bufferSize, byref(bytesRead))
     return buf.value
-    
+
+def getByte(proc, addr):
+    '''获取一字节内容
+        return byte
+    '''
+    buf = c_int(0)
+    bytesRead = c_ulong(0)
+    bufferSize = 1    
+    w32.ReadProcessMemory(proc.handle, addr, byref(buf), bufferSize, byref(bytesRead))
+    return buf.value
+
+def getHP(proc):
+    '''
+    获取当前HP
+    return int
+    '''
+    return getInt(proc, ADDR.HP)
+
+def getHPMax(proc):
+    '''
+    获取最大HP
+    return int
+    '''
+    return getInt(proc, ADDR.HPMAX)
+
+def getHPRatio(proc):
+    '''
+    获取HP比率
+    return float
+    '''
+    return float(getHP(proc)) / getHPMax(proc)
+
+def getFatigue(proc):
+    '''
+    获取疲劳值
+    return float
+    '''
+    return float(getShort(proc, ADDR.FATIGUE)) / 10
+
 def getRoleName(proc):
     '''获取玩家名称 
         return string
@@ -143,10 +181,14 @@ def getAngle(proc):
     '''
     
     cos = getFloat(proc, ADDR.PC_COS)
+    print cos
     sin = getFloat(proc, ADDR.PC_SIN)
-    
-    cosdeg = math.acos(cos) * 180 / math.pi
-    sindeg = math.asin(sin) * 180 / math.pi
+    print sin
+    try:
+        cosdeg = math.acos(cos) * 180 / math.pi
+        sindeg = math.asin(sin) * 180 / math.pi
+    except ValueError:
+        return None
     
     angle = cosdeg
     if(sindeg > 0):
@@ -156,15 +198,21 @@ def getAngle(proc):
 
 def getShipState(proc):
     '''返回船只状态列表
-        return []
+        return string
     '''
-    list = MyList()
     value = getInt(proc, ADDR.SHIP_STATE)
+    if(value == 0):
+        return None
+    
     i = 1
     while(i <= 0x2000000):
         if(i & value > 0):
-            list.append(ShipState[i])
-    return list
+            if(ShipState.has_key(i)):
+                return ShipState[i]
+            else:
+                return None
+        i <<= 1
+    return None
 
 def getTabAddr(proc, id, addr):
     A = getInt(proc, addr)
@@ -289,7 +337,59 @@ def isNormal(proc):
     '''是否正常，可执行命令的状态
     == 在线 && !鼠标忙 && !切换场景
     '''
-    return isOnline(proc) and (not isBusy(proc)) and (not isSceneChange(proc)) 
+    return isOnline(proc) and (not isBusy(proc)) and (not isSceneChange(proc))
+
+def getLocationType(proc):
+    '''
+    获取所在地方类型
+    return byte
+    '''
+    return getByte(proc, ADDR.LOCTYPE)
+
+def getSeaSeq(proc):
+    '''
+    获取海域序号
+    return byte
+    '''
+    return getByte(proc, ADDR.SEASEQ)
+
+def isAutoSail(proc):
+    '''
+    是否自动航行
+    return bool
+    '''
+    return getByte(proc, ADDR.AUTO_SAIL) == 1
+
+def getCombat(proc):
+    '''
+    获取战斗状态
+    '''
+    return getInt(proc, ADDR.COMBAT_STATE)
+
+def getSkill(proc):
+    '''
+    获取使用技能状态
+    (数目， 技能1ID, 技能2ID, 技能3ID)
+    '''
+    addr = getInt(proc, 0xBD8388)
+    addr = getInt(proc, addr+0x20)
+    
+    num = getInt(proc, addr + 0x38)
+    id1 = getInt(proc, addr + 0xC)
+    id2 = getInt(proc, addr + 0x14)
+    id3 = getInt(proc, addr + 0x1C)
+    
+    return (num, [id1, id2, id3])
+
+def getWeather(proc):
+    '''
+    天气
+    '''
+    return getByte(proc, ADDR.WEATHER)
+
+#===============================================================================
+# main相关函数
+#===============================================================================
 
 def selfTest(proc):
     '''基本信息自检
@@ -335,6 +435,14 @@ if __name__ == "__main__":
         print 'TAB对象 = %s<end>' % (getTabName(pro))
         print '陆地跟随 = %d' % (getLandFollow(pro))
         print '正常 = %s' % (isNormal(pro))
+        print '所在地方类型 = %x' % (getLocationType(pro))
+        print '海域序号 = %x' % (getSeaSeq(pro))
+        print '自动航行 = %s' % (isAutoSail(pro))
+        print getSkill(pro)
+        print 'hp比率 = %s' % (getHPRatio(pro))
+        print '疲劳 = %s' % (getFatigue(pro))
+        print '天气 = %s' %(getWeather(pro))
+        print getShipState(pro)
 #        while(True):
 #            print '海洋坐标: x=%.3f, y=%.3f' % getSeaPos(pro, (0x400, 0xbff))
 #            print '陆地坐标: x=%.3f, y=%.3f' % getLandPos(pro)

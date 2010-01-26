@@ -1,8 +1,11 @@
-#Sun Jan 10 14:07:33 CST 2010
+#Mon Jan 25 20:03:21 CST 2010
 eclipse.preferences.version=1
 encoding//src/client.py=gbk
 encoding//src/daemon.py=utf-8
 encoding//src/dol/dolAddr.py=utf-8
+encoding//src/dol/dolCall.py=utf-8
+encoding//src/dol/dolCallEnum.py=GBK
+encoding//src/dol/dolSafeCall.py=utf-8
 encoding//src/dol/dolScript.py=utf-8
 encoding//src/dol/enum.py=utf-8
 encoding//src/helper.py=utf-8

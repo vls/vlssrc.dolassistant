@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'mainDialog.ui'
 #
-# Created: Sat Jan 23 22:19:17 2010
+# Created: Tue Jan 26 12:59:49 2010
 #      by: PyQt4 UI code generator 4.6.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -22,15 +22,6 @@ class Ui_mainDialog(object):
         self.tabWidget = QtGui.QTabWidget(mainDialog)
         self.tabWidget.setGeometry(QtCore.QRect(10, 10, 401, 431))
         self.tabWidget.setObjectName("tabWidget")
-        self.tab_4 = QtGui.QWidget()
-        self.tab_4.setObjectName("tab_4")
-        self.txt = QtGui.QPlainTextEdit(self.tab_4)
-        self.txt.setGeometry(QtCore.QRect(0, 0, 391, 401))
-        self.txt.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.txt.setUndoRedoEnabled(False)
-        self.txt.setReadOnly(True)
-        self.txt.setObjectName("txt")
-        self.tabWidget.addTab(self.tab_4, "")
         self.tab = QtGui.QWidget()
         self.tab.setObjectName("tab")
         self.tblScript = QtGui.QTableWidget(self.tab)
@@ -76,6 +67,9 @@ class Ui_mainDialog(object):
         self.btnRefreshScript = QtGui.QPushButton(self.tab)
         self.btnRefreshScript.setGeometry(QtCore.QRect(10, 360, 80, 25))
         self.btnRefreshScript.setObjectName("btnRefreshScript")
+        self.btnMin = QtGui.QPushButton(self.tab)
+        self.btnMin.setGeometry(QtCore.QRect(100, 180, 80, 25))
+        self.btnMin.setObjectName("btnMin")
         self.tabWidget.addTab(self.tab, "")
         self.tab_2 = QtGui.QWidget()
         self.tab_2.setObjectName("tab_2")
@@ -92,6 +86,15 @@ class Ui_mainDialog(object):
         self.ipListWidget.setGeometry(QtCore.QRect(10, 10, 371, 351))
         self.ipListWidget.setObjectName("ipListWidget")
         self.tabWidget.addTab(self.tab_2, "")
+        self.tab_4 = QtGui.QWidget()
+        self.tab_4.setObjectName("tab_4")
+        self.txt = QtGui.QPlainTextEdit(self.tab_4)
+        self.txt.setGeometry(QtCore.QRect(0, 0, 391, 401))
+        self.txt.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.txt.setUndoRedoEnabled(False)
+        self.txt.setReadOnly(True)
+        self.txt.setObjectName("txt")
+        self.tabWidget.addTab(self.tab_4, "")
         self.tab_3 = QtGui.QWidget()
         self.tab_3.setObjectName("tab_3")
         self.tblNetPlayer = QtGui.QTableWidget(self.tab_3)
@@ -120,11 +123,11 @@ class Ui_mainDialog(object):
         QtCore.QObject.connect(self.btnExec, QtCore.SIGNAL("clicked()"), mainDialog.execScript)
         QtCore.QObject.connect(self.btnRefreshScript, QtCore.SIGNAL("clicked()"), mainDialog.refreshScript)
         QtCore.QObject.connect(self.btnSaveScript, QtCore.SIGNAL("clicked()"), mainDialog.saveScript)
+        QtCore.QObject.connect(self.btnMin, QtCore.SIGNAL("clicked()"), mainDialog.wiseMin)
         QtCore.QMetaObject.connectSlotsByName(mainDialog)
 
     def retranslateUi(self, mainDialog):
         mainDialog.setWindowTitle(QtGui.QApplication.translate("mainDialog", "控制端", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_4), QtGui.QApplication.translate("mainDialog", "信息", None, QtGui.QApplication.UnicodeUTF8))
         self.tblScript.setSortingEnabled(True)
         self.tblScript.horizontalHeaderItem(0).setText(QtGui.QApplication.translate("mainDialog", "name", None, QtGui.QApplication.UnicodeUTF8))
         self.tblScript.horizontalHeaderItem(1).setText(QtGui.QApplication.translate("mainDialog", "desc", None, QtGui.QApplication.UnicodeUTF8))
@@ -136,11 +139,13 @@ class Ui_mainDialog(object):
         self.tblPlayer.horizontalHeaderItem(1).setText(QtGui.QApplication.translate("mainDialog", "hwnd", None, QtGui.QApplication.UnicodeUTF8))
         self.tblPlayer.horizontalHeaderItem(2).setText(QtGui.QApplication.translate("mainDialog", "id", None, QtGui.QApplication.UnicodeUTF8))
         self.btnRefreshScript.setText(QtGui.QApplication.translate("mainDialog", "刷新", None, QtGui.QApplication.UnicodeUTF8))
+        self.btnMin.setText(QtGui.QApplication.translate("mainDialog", "智能最小化", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), QtGui.QApplication.translate("mainDialog", "脚本", None, QtGui.QApplication.UnicodeUTF8))
         self.btnAdd.setText(QtGui.QApplication.translate("mainDialog", "Add", None, QtGui.QApplication.UnicodeUTF8))
         self.btnDelete.setText(QtGui.QApplication.translate("mainDialog", "Delete", None, QtGui.QApplication.UnicodeUTF8))
         self.btnSave.setText(QtGui.QApplication.translate("mainDialog", "Save", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), QtGui.QApplication.translate("mainDialog", "设置", None, QtGui.QApplication.UnicodeUTF8))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_4), QtGui.QApplication.translate("mainDialog", "信息", None, QtGui.QApplication.UnicodeUTF8))
         self.tblNetPlayer.setSortingEnabled(True)
         self.tblNetPlayer.horizontalHeaderItem(0).setText(QtGui.QApplication.translate("mainDialog", "name", None, QtGui.QApplication.UnicodeUTF8))
         self.tblNetPlayer.horizontalHeaderItem(1).setText(QtGui.QApplication.translate("mainDialog", "ip", None, QtGui.QApplication.UnicodeUTF8))

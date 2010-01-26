@@ -34,30 +34,6 @@
    <property name="currentIndex">
     <number>0</number>
    </property>
-   <widget class="QWidget" name="tab_4">
-    <attribute name="title">
-     <string>信息</string>
-    </attribute>
-    <widget class="QPlainTextEdit" name="txt">
-     <property name="geometry">
-      <rect>
-       <x>0</x>
-       <y>0</y>
-       <width>391</width>
-       <height>401</height>
-      </rect>
-     </property>
-     <property name="horizontalScrollBarPolicy">
-      <enum>Qt::ScrollBarAlwaysOff</enum>
-     </property>
-     <property name="undoRedoEnabled">
-      <bool>false</bool>
-     </property>
-     <property name="readOnly">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </widget>
    <widget class="QWidget" name="tab">
     <attribute name="title">
      <string>脚本</string>
@@ -195,6 +171,19 @@
       <string>刷新</string>
      </property>
     </widget>
+    <widget class="QPushButton" name="btnMin">
+     <property name="geometry">
+      <rect>
+       <x>100</x>
+       <y>180</y>
+       <width>80</width>
+       <height>25</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>智能最小化</string>
+     </property>
+    </widget>
    </widget>
    <widget class="QWidget" name="tab_2">
     <attribute name="title">
@@ -247,6 +236,30 @@
        <width>371</width>
        <height>351</height>
       </rect>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="tab_4">
+    <attribute name="title">
+     <string>信息</string>
+    </attribute>
+    <widget class="QPlainTextEdit" name="txt">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>0</y>
+       <width>391</width>
+       <height>401</height>
+      </rect>
+     </property>
+     <property name="horizontalScrollBarPolicy">
+      <enum>Qt::ScrollBarAlwaysOff</enum>
+     </property>
+     <property name="undoRedoEnabled">
+      <bool>false</bool>
+     </property>
+     <property name="readOnly">
+      <bool>true</bool>
      </property>
     </widget>
    </widget>
@@ -411,6 +424,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>btnMin</sender>
+   <signal>clicked()</signal>
+   <receiver>mainDialog</receiver>
+   <slot>wiseMin()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>149</x>
+     <y>223</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>209</x>
+     <y>224</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>addItem()</slot>
@@ -420,5 +449,6 @@
   <slot>execScript()</slot>
   <slot>saveScript()</slot>
   <slot>refreshScript()</slot>
+  <slot>wiseMin()</slot>
  </slots>
 </ui>

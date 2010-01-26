@@ -22,6 +22,9 @@ class ADDR:
     
     
     #section 2
+    COMBAT_STATE = 0xB6FA3c             #战斗状态         0=正常 1=主动攻击 2=被攻击 3= 模拟主动攻击 4= 模拟被动攻击
+
+    
     
     HP = 0xB6FAF0                       #行动力
     
@@ -29,7 +32,9 @@ class ADDR:
     PC_ID = HP - 0xCC                   #玩家ID
     SHIP_STATE = HP - 0XBC              #船只状态
     
-    MAXHP = HP + 4                      #最大行动力
+    
+    
+    HPMAX = HP + 4                      #最大行动力
     MONEY = HP + 8                      #金钱
     #SAILOR = 0xB6FAFC									#当前水手
     FATIGUE = HP + 0x10                 #疲劳 > 300吃，（显示值的10倍）
@@ -59,7 +64,10 @@ class ADDR:
     
     TAB_STATIC = SEA_FOLLOW + 0xEC - 0x68   #TAB 选择静物对象基址
     
-    LOCATION = SEA_FOLLOW + 0xb0c -0xa68    #所在地方（包括港口，室内，海域）
+    LOCATION = SEA_FOLLOW + 0xb0c -0xa68    #所在地方名称基址（包括港口，室内，海域）[[ADDR]]
+    
+    SEASEQ = 0xB7004A                   #海域序号
+    LOCTYPE = 0xB7004B                  #所在地方类型
     
     PARTY_BASE = SEA_FOLLOW + 0xb78 - 0xa68    #队伍基址 [[ADDR]+C]
     
@@ -76,7 +84,7 @@ class ADDR:
     
     @staticmethod
     def getIntList():
-        return [ADDR.HP, ADDR.MAXHP, ADDR.MONEY, ADDR.PC_ID,  ADDR.SHIP_HP]
+        return [ADDR.HP, ADDR.HPMAX, ADDR.MONEY, ADDR.PC_ID,  ADDR.SHIP_HP]
     
     @staticmethod
     def getIntStr():

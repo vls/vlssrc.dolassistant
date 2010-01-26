@@ -153,6 +153,7 @@ class WorkerThread(threading.Thread):
                     self._requests_queue.put(request)
                     break
                 try:
+                    print "in Run(): args = %s" % (request.args) #vls
                     result = request.callable(*request.args, **request.kwds)
                     self._results_queue.put((request, result))
                 except:

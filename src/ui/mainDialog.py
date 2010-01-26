@@ -63,7 +63,19 @@ class mainDialog(QMainWindow, Ui_mainDialog):
         
         #print "reg = %d" % ( w32.user32.RegisterHotKey(self.winId().__int__(), 4444, win32con.MOD_WIN, win32con.VK_F3))
         
+#===============================================================================
+# private functions
+#===============================================================================
 
+    def __reloadMod(self, modstr):
+        modstr = 'scripts'
+        if sys.modules.has_key(modstr):
+            module = sys.modules[modstr]
+            reload(module)
+        else:
+            module = __import__(modstr)
+        
+        return module
 
         
     def loadItems(self):
@@ -86,7 +98,7 @@ class mainDialog(QMainWindow, Ui_mainDialog):
         return ipList
     
     def loadScripts(self):
-        scriptMod = __import__('scripts')
+        scriptMod = self.__reloadMod('scripts')
         scriptList = []
         row = 0
         #print self.tblScript.rowCount()
@@ -125,21 +137,30 @@ class mainDialog(QMainWindow, Ui_mainDialog):
                 
 
     
-    def __print(self, msg):
-        print "__pr1123int %s" % (msg)
+
     
     def execScript(self):
 
         hwndList = self.getPlayerHwndList()
-        requests = []
-        for hwnd in hwndList:
-            requests.extend(
-                            makeRequests(self.__print, [hwnd])
-            )
+        
+        if(len(hwndList) == 0):
+            MessageBox(0, "请选择要发送命令的窗口", "", 0)
+            return
+        
+        itemList =  self.tblScript.selectedItems()
+        
+        if(len(itemList) == 0):
+            print "no selected row"
+            return
+        
+        item = itemList[0]
+        row = self.tblScript.row(item)
+        item = self.tblScript.item(row, 0)
             
-        for request in requests:
-            print request
-            self.pool.putRequest(request)
+        txt = str(item.text()).strip()
+        
+        self.invokeScript(txt)
+        
     
     def loadKey(self, filename):
         
@@ -151,7 +172,10 @@ class mainDialog(QMainWindow, Ui_mainDialog):
             
             txt = str(item.text()).strip()
             if(not kDict.has_key(txt)):
-                kDict[txt] = row
+                kDict[txt] = self.tblScript.row(item)
+        
+        #print kDict
+        
         file = None
         try:
             file = open(filename, "r")
@@ -223,19 +247,22 @@ class mainDialog(QMainWindow, Ui_mainDialog):
         self.regKey()
         
     def invokeScript(self, funcName):
-        modstr = 'scripts'
-        if sys.modules.has_key(modstr):
-            module = sys.modules[modstr]
-            reload(module)
-        else:
-            module = __import__('scripts')
+        module = self.__reloadMod('scripts')
         func = getattr(module, funcName)
         args, varargs, varkw, defaults = inspect.getargspec(func)        
         
+        if(len(args) < 2):
+            MessageBox(0, "脚本参数个数少于2", "", 0)
+            return
+        
         hwndList = self.getPlayerHwndList()
+        
+        
         
         if(len(hwndList) == 0):
             MessageBox(0, "请选择要发送命令的窗口", "", 0)
+            return
+        
         
 
         prefunc = None
@@ -247,24 +274,27 @@ class mainDialog(QMainWindow, Ui_mainDialog):
         if(prefunc != None):
             flag, preargs = prefunc(self)
             
-        if(not flag):
+        if(prefunc != None and not flag):
             return
         
         requests = []
         
         for hwnd in hwndList:
             if(prefunc != None):
-                preargs.insert(0, hwnd)
                 print preargs
-                re = WorkRequest(func, preargs)
-                requests.append(re)
+                re = WorkRequest(mainDialogBL.scriptWrap, [func, hwnd, list(preargs)])
+                self.pool.putRequest(re)
                 
             else:
-                requests.append(WorkRequest(func, [hwnd]))
+                re = WorkRequest(mainDialogBL.scriptWrap, [func, hwnd, []])
+                print "In invokeScript(): args = %s" % (re.args)
+                self.pool.putRequest(re)
             
-        for request in requests:
-            self.pool.putRequest(request)
-            
+        
+    
+
+        
+         
 #===============================================================================
 # Slot           
 #===============================================================================
@@ -277,6 +307,7 @@ class mainDialog(QMainWindow, Ui_mainDialog):
     def refreshScript(self):
         self.tblScript.setRowCount(0)
         self.loadScripts()
+        self.tblScript.sortItems(0)
         self.loadKey(self.keyTxt)
         self.autoRegKey()
     
@@ -326,7 +357,11 @@ class mainDialog(QMainWindow, Ui_mainDialog):
             self.tblPlayer.setItem(row, 2, item)
             
             row += 1
-
+    
+    def wiseMin(self):
+        mainDialogBL.wiseMin(self.getPlayerHwndList())
+            
+    
 #===============================================================================
 # Event
 #===============================================================================
@@ -361,7 +396,10 @@ class mainDialog(QMainWindow, Ui_mainDialog):
                 hwnd = item.text().toInt()[0]
                 hwndList.append(hwnd)
         return hwndList
-        
+    
+    
+    
+
         
     
     
