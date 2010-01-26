@@ -383,9 +383,21 @@ def getSkill(proc):
 
 def getWeather(proc):
     '''
-    天气
+    天气 
+    晴天= 0, 2
+    雨天 = 0x20
+    大雨 = 0x24 ??
+    暴风雨 = 0x48
+    阴天 = 0x90 ??
     '''
     return getByte(proc, ADDR.WEATHER)
+
+def getSailState(proc):
+    '''
+    获取帆位
+    0-4
+    '''
+    return getInt(proc, ADDR.SAIL_STATE)
 
 #===============================================================================
 # main相关函数
@@ -428,6 +440,7 @@ if __name__ == "__main__":
         print getRoleName(pro)
         selfTest(pro)
         print '忙? %s' % (isBusy(pro))
+        print '在线? %s' % (isOnline(pro))
         print '地点 = %s' % (getLocation(pro))
         print '队伍列表 = %s' % (getParty(pro))
         print '快捷键 = %s' % (getQuickKey(pro))
@@ -441,8 +454,9 @@ if __name__ == "__main__":
         print getSkill(pro)
         print 'hp比率 = %s' % (getHPRatio(pro))
         print '疲劳 = %s' % (getFatigue(pro))
-        print '天气 = %s' %(getWeather(pro))
-        print getShipState(pro)
+        print '天气 = %x' %(getWeather(pro))
+        print '航行状态 = %s' %(getShipState(pro))
+        print '帆位 = %d' % (getSailState(pro))
 #        while(True):
 #            print '海洋坐标: x=%.3f, y=%.3f' % getSeaPos(pro, (0x400, 0xbff))
 #            print '陆地坐标: x=%.3f, y=%.3f' % getLandPos(pro)

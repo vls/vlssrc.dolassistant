@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'mainDialog.ui'
 #
-# Created: Tue Jan 26 12:59:49 2010
+# Created: Tue Jan 26 13:13:07 2010
 #      by: PyQt4 UI code generator 4.6.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -18,6 +18,7 @@ class Ui_mainDialog(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(mainDialog.sizePolicy().hasHeightForWidth())
         mainDialog.setSizePolicy(sizePolicy)
+        mainDialog.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
         mainDialog.setAutoFillBackground(False)
         self.tabWidget = QtGui.QTabWidget(mainDialog)
         self.tabWidget.setGeometry(QtCore.QRect(10, 10, 401, 431))
@@ -69,6 +70,7 @@ class Ui_mainDialog(object):
         self.btnRefreshScript.setObjectName("btnRefreshScript")
         self.btnMin = QtGui.QPushButton(self.tab)
         self.btnMin.setGeometry(QtCore.QRect(100, 180, 80, 25))
+        self.btnMin.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
         self.btnMin.setObjectName("btnMin")
         self.tabWidget.addTab(self.tab, "")
         self.tab_2 = QtGui.QWidget()

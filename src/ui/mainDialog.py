@@ -43,6 +43,8 @@ class mainDialog(QMainWindow, Ui_mainDialog):
         
         QMainWindow.__init__(self, parent)
         self.setupUi(self)
+        self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
+        #self.addContextMenu()
         
         self.stdout_ = sys.stdout
         #sys.stdout = self
@@ -66,7 +68,17 @@ class mainDialog(QMainWindow, Ui_mainDialog):
 #===============================================================================
 # private functions
 #===============================================================================
-
+    def addContextMenu(self):
+        '''
+        增加右键菜单
+        '''
+        action = QtGui.QAction(unicode('总在最前'), self)
+        action.setCheckable(True)
+        self.connect(action, QtCore.SIGNAL("toggled(bool)"), self.topToggled)
+        
+        self.addAction(action)
+    
+    
     def __reloadMod(self, modstr):
         modstr = 'scripts'
         if sys.modules.has_key(modstr):
@@ -298,6 +310,15 @@ class mainDialog(QMainWindow, Ui_mainDialog):
 #===============================================================================
 # Slot           
 #===============================================================================
+    def topToggled(self, flag):
+        print self.winId()
+        if(flag):
+            self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
+        else:
+            self.setWindowFlags(self.windowFlags() & ~QtCore.Qt.WindowStaysOnTopHint)
+        self.show()
+        print self.winId()
+
     def saveScript(self):
         self.saveKey(self.keyTxt)
         self.autoRegKey()
@@ -396,6 +417,10 @@ class mainDialog(QMainWindow, Ui_mainDialog):
                 hwnd = item.text().toInt()[0]
                 hwndList.append(hwnd)
         return hwndList
+    
+    
+    
+    
     
     
     

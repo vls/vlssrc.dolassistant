@@ -58,7 +58,10 @@ class ADDR:
     
     AUTO_SAIL = 0xB51DC0 + OFFSET + 4   #自动航行
     
+    
     SEA_FOLLOW = 0xB6FF40               #海洋跟随
+    
+    SAIL_STATE = SEA_FOLLOW - 0x6c
     
     TAB_PCBASE = SEA_FOLLOW + 0xCC - 0x68   #TAB 选择人物及NPC对象基址
     
