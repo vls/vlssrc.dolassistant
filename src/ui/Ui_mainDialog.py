@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'mainDialog.ui'
 #
-# Created: Tue Jan 26 13:13:07 2010
+# Created: Wed Jan 27 15:00:05 2010
 #      by: PyQt4 UI code generator 4.6.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -21,6 +21,7 @@ class Ui_mainDialog(object):
         mainDialog.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
         mainDialog.setAutoFillBackground(False)
         self.tabWidget = QtGui.QTabWidget(mainDialog)
+        self.tabWidget.setEnabled(True)
         self.tabWidget.setGeometry(QtCore.QRect(10, 10, 401, 431))
         self.tabWidget.setObjectName("tabWidget")
         self.tab = QtGui.QWidget()
@@ -89,6 +90,7 @@ class Ui_mainDialog(object):
         self.ipListWidget.setObjectName("ipListWidget")
         self.tabWidget.addTab(self.tab_2, "")
         self.tab_4 = QtGui.QWidget()
+        self.tab_4.setEnabled(False)
         self.tab_4.setObjectName("tab_4")
         self.txt = QtGui.QPlainTextEdit(self.tab_4)
         self.txt.setGeometry(QtCore.QRect(0, 0, 391, 401))
@@ -98,6 +100,7 @@ class Ui_mainDialog(object):
         self.txt.setObjectName("txt")
         self.tabWidget.addTab(self.tab_4, "")
         self.tab_3 = QtGui.QWidget()
+        self.tab_3.setEnabled(False)
         self.tab_3.setObjectName("tab_3")
         self.tblNetPlayer = QtGui.QTableWidget(self.tab_3)
         self.tblNetPlayer.setGeometry(QtCore.QRect(10, 20, 369, 165))

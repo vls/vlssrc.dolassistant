@@ -91,7 +91,10 @@ class mainDialog(QMainWindow, Ui_mainDialog):
 
         
     def loadItems(self):
-        file = open(self.ipTxt, "r")
+        try:
+            file = open(self.ipTxt, "r")
+        except IOError:
+            return
         
         try:
             strList = file.readlines()

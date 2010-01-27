@@ -72,7 +72,7 @@ if __name__ ==  "__main__":
     msg = Message()
     msg.scriptName = 'test'
     
-    list = ["最高神的歎息","迷途小冒險"]
+    list = ["大航海时代","光荣"]
     print list
     #print list[0]
     #print list[1]
