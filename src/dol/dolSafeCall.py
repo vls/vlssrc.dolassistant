@@ -6,10 +6,6 @@ from dolCallEnum import *
 def dowhile(callable, args = [], interval = 0.2):
     while(not callable(*args)):
         time.sleep(interval)
-
-def custom_safe(proc, num):
-    dowhile(isNormal, [proc])
-    custom(proc, num)
     
 def follow_safe(proc, userid):
     type = getLocationType(proc)

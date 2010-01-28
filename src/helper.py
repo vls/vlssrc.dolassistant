@@ -34,7 +34,7 @@ class ProcessHelper:
     
     def getHwndByProc(self, proc):
         pid = win32process.GetProcessId(proc)
-        return self.getMianWindowHandle(pid)
+        return self.getMainWindowHandle(pid)
     
         
     

@@ -11,54 +11,11 @@ import time
 import math
 import win32gui
 
+from global_ import *
+
 dolClassName = "Greate Voyages Online Game MainFrame"
 
-def getStringW(proc, addr, length):
-    buf = c_wchar_p(' ' * (length))
-    bytesRead = c_ulong(0)
-    w32.ReadProcessMemory(proc.handle, addr, buf, length * 2, byref(bytesRead))
-    return buf.value
-    
 
-def getFloat(proc, addr):
-    '''获取float
-        return float
-    '''
-    buf = c_float(0)
-    bytesRead = c_ulong(0)
-    bufferSize = 8    
-    w32.ReadProcessMemory(proc.handle, addr, byref(buf), bufferSize, byref(bytesRead))
-    return buf.value
-    
-def getInt(proc, addr):
-    '''获取4字节的内容
-        return int
-    '''
-    buf = c_int(0)
-    bytesRead = c_ulong(0)
-    bufferSize = 4    
-    w32.ReadProcessMemory(proc.handle, addr, byref(buf), bufferSize, byref(bytesRead))
-    return buf.value
-
-def getShort(proc, addr):
-    '''获取两字节内容
-        return short int
-    '''
-    buf = c_int(0)
-    bytesRead = c_ulong(0)
-    bufferSize = 2    
-    w32.ReadProcessMemory(proc.handle, addr, byref(buf), bufferSize, byref(bytesRead))
-    return buf.value
-
-def getByte(proc, addr):
-    '''获取一字节内容
-        return byte
-    '''
-    buf = c_int(0)
-    bytesRead = c_ulong(0)
-    bufferSize = 1    
-    w32.ReadProcessMemory(proc.handle, addr, byref(buf), bufferSize, byref(bytesRead))
-    return buf.value
 
 def getHP(proc):
     '''
@@ -387,7 +344,7 @@ def getWeather(proc):
     晴天= 0, 2
     雨天 = 0x20
     大雨 = 0x24 ??
-    暴风雨 = 0x48
+    暴风雨 = 0x48, 0x42
     阴天 = 0x90 ??
     '''
     return getByte(proc, ADDR.WEATHER)
@@ -398,6 +355,12 @@ def getSailState(proc):
     0-4
     '''
     return getInt(proc, ADDR.SAIL_STATE)
+
+def getSailDay(proc):
+    '''
+    航行天数
+    '''
+    return getInt(proc, ADDR.SAIL_DAY)
 
 #===============================================================================
 # main相关函数
@@ -443,7 +406,7 @@ if __name__ == "__main__":
         print '在线? %s' % (isOnline(pro))
         print '地点 = %s' % (getLocation(pro))
         print '队伍列表 = %s' % (getParty(pro))
-        print '快捷键 = %s' % (getQuickKey(pro))
+        #print '快捷键 = %s' % (getQuickKey(pro))
         print '角度 = %s' % (getAngle(pro))
         print 'TAB对象 = %s<end>' % (getTabName(pro))
         print '陆地跟随 = %d' % (getLandFollow(pro))

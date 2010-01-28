@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from dol import dolScript, dolSafeCall, dolCallEnum, enum
+from dol import dolScript, dolSafeCall, dolCallEnum, enum, dolCall
 import w32
 import helper
 from helper import WindowHelper, ProcessHelper
@@ -9,9 +9,14 @@ import pyqmacro
 import dll
 from PyQt4 import QtCore, QtGui
 import threading
+import ctypes
+from dol import dolBuildShipScript
+
+from dol.dolBuildShipData import *
 
 ds = dolScript
 
+from dol.global_ import *
 
 
 #===============================================================================
@@ -26,16 +31,14 @@ ds = dolScript
 #===============================================================================
 
 
-def __beep(title = "", message = ""):
-    win32api.MessageBeep(win32con.MB_ICONEXCLAMATION)
-    win32api.MessageBox(None, unicode(title), unicode(message), win32con.MB_ICONERROR)
     
+
+
 def __dowhile(callable, args = [], interval = 0.2):
     while(not callable(*args)):
         time.sleep(interval)
         
-def __log(msg):
-    print "%s : %s " % (datetime.datetime.now(), msg)
+
 
 def test(st,st2):
     print 'Test OK!!! String = %s / %s' % (st,st2)
@@ -83,7 +86,7 @@ def custom(hwnd, proc, num):
     '''
     print 'custom'
     
-    dolSafeCall.custom_safe(proc, num)
+    dolSafeCall.custom(proc, num)
     
 def testHwnd(hwnd):
     '''测试'''
@@ -113,9 +116,7 @@ def toDock(hwnd, proc):
     进入码头
     '''
     
-    userid = dolScript.getPCID(proc)
-    
-    dolSafeCall.move(proc, userid, dolCallEnum.MoveTo.Dock)
+    dolSafeCall.move(proc, dolCallEnum.MoveTo.Dock)
 
 def __enterCity_pre(window):
     result, value = __getInt(unicode('从哪里进入城市'), unicode('1=码头广场, 2=广场, 3=商业地区, 4=商务会馆'))
@@ -135,15 +136,14 @@ def enterCity(hwnd, proc, moveto):
     '''
     进入城市
     '''
-    userid = dolScript.getPCID(proc)
-    dolSafeCall.move(proc, userid, moveto)
+    dolSafeCall.move(proc, moveto)
     
 def moveSea(hwnd, proc):
     '''
     出海
     '''
-    userid = dolScript.getPCID(proc)
-    dolSafeCall.moveSea(proc, userid)
+    
+    dolSafeCall.moveSea(proc)
 
 sailingLock = threading.Lock()
 
@@ -178,7 +178,7 @@ def sailing(hwnd, proc, hwndList):
     leadHwnd = None
     
     stormWeather = 0x48
-    
+    myname = dolScript.getRoleName(proc)
     if(party != [] and myid != party[0]):
         for hwnd in hwndList:
             if(__findLead(hwnd)):
@@ -188,43 +188,44 @@ def sailing(hwnd, proc, hwndList):
             print "找不到队长，退出"
             return
         
-        myname = dolScript.getRoleName(proc)
-        __log( "[%s] 开始队员异常处理" % (myname))
+        
+        log( "[%s] 开始队员异常处理" % (myname))
         count = 0
         while(True):
             #if(count % 20 == 0):
-                #__log( "[%s] 报到!" % (myname))
+                #log( "[%s] 报到!" % (myname))
             
             if(dolScript.getLocationType(proc) != dolCallEnum.LocType.Sea):
-                __log( "[%s] Not in sea, exit" %(myname))
+                log( "[%s] Not in sea, exit" %(myname))
                 break
         
             if(not dolScript.isOnline(proc)):
-                __log( "[%s] 断线了， 退出脚本" % (myname))
+                log( "[%s] 断线了， 退出脚本" % (myname))
+                beep(unicode("警告"), unicode("[%s] 断线了！！！" % (myname)))
                 break
             
             if(dolScript.getWeather(proc) == stormWeather):
-                __log("遇到暴风")
+                log("遇到暴风")
                 while(dolScript.getSailState(proc) != 0):
                     dolSafeCall.sail(proc, 0)
                     time.sleep(0.2)
                 
-                __beep(unicode("警告"), unicode("遇到暴风!!!"))
-                __log('遇到暴风， 已停船， 停止脚本')
+                beep(unicode("警告"), unicode("遇到暴风!!!"))
+                log('遇到暴风， 已停船， 停止脚本')
                 break
             
             statetxt = dolScript.getShipState(proc)
             if(statetxt == "鼠患"):
                 leadProc = WindowHelper.getProcByHwnd(leadHwnd)
                 
-                __log("[%s]发现<%s>,请求队长发动驱除技能" % (myname, statetxt)) 
+                log("[%s]发现<%s>,请求队长发动驱除技能" % (myname, statetxt)) 
                 __dowhile(dolScript.isNormal, [leadProc])
-                dolSafeCall.custom_safe(leadProc, 4)#f4 驱除
+                dolSafeCall.custom(leadProc, 4)#f4 驱除
                 time.sleep(2)
                 win32api.CloseHandle(leadProc)
             count += 1
             time.sleep(0.5)
-        __log( "[%s] 退出脚本sailing" % (myname))
+        log( "[%s] 退出脚本sailing" % (myname))
         return
     
     
@@ -234,45 +235,52 @@ def sailing(hwnd, proc, hwndList):
     print "Lock acquired"
     count = 0
     while(True):
-        if(dolScript.getLocationType(proc) != dolCallEnum.LocType.Sea):
-            __log( "Not in sea, exit")
-            break
         
         if(not dolScript.isOnline(proc)):
-            __log( "断线了， 退出脚本")
+            log( "断线了， 退出脚本")
+            beep(unicode("警告"), unicode("[%s] 断线了！！！" % (myname)))
             break
         
+        if(dolScript.getLocationType(proc) != dolCallEnum.LocType.Sea):
+            log( "Not in sea, exit")
+            break
+        
+        
+        
         #if(count % 10 == 0):
-        #    __log("Sailing() running...")
+        #    log("Sailing() running...")
             
         if(dolScript.getCombat(proc) == 2): #被攻击
-            __log("停战")
+            log("停战")
             __dowhile(dolScript.isNormal, [proc])
-            dolSafeCall.custom_safe(proc, 5) #f5 要设置为停战
+            dolSafeCall.custom(proc, 6) #f6 要设置为停战
             time.sleep(0.3)
             
         
                     
         if(dolScript.getWeather(proc) == stormWeather):
-            __log("遇到暴风")
+            log("遇到暴风")
             while(dolScript.getSailState(proc) != 0):
                 dolSafeCall.sail(proc, 0)
                 time.sleep(0.2)
             
-            __beep(unicode("警告"), unicode("遇到暴风!!!"))
-            __log('遇到暴风， 已停船， 停止脚本')
+            beep(unicode("警告"), unicode("遇到暴风!!!"))
+            log('遇到暴风， 已停船， 停止脚本')
             break
         
         
         while(dolScript.getHPRatio(proc) < 0.4):
+            if(not dolScript.isOnline(proc)):
+                break
+                
             hp1 = dolScript.getHP(proc)
-            __log("要补行动力, 行动力 = %d" % (hp1))
+            log("要补行动力, 行动力 = %d" % (hp1))
             __dowhile(dolScript.isNormal, [proc])
             
-            dolSafeCall.custom_safe(proc, 8) #f8 要设置为料理
+            dolSafeCall.custom(proc, 7) #f7 要设置为料理
             time.sleep(2)
             hp2 = dolScript.getHP(proc)
-            __log("吃了一个料理, 行动力 = %d" % (hp2))
+            log("吃了一个料理, 行动力 = %d" % (hp2))
             if(hp1 == hp2):
                 time.sleep(5)
             time.sleep(0.2)
@@ -281,46 +289,50 @@ def sailing(hwnd, proc, hwndList):
             
         
         if(not dolScript.isAutoSail(proc) and dolScript.getSailState(proc) != 0 and dolScript.getWeather(proc) != stormWeather):
-            __log("操帆")
+            log("操帆")
             __dowhile(dolScript.isNormal, [proc])
-            dolSafeCall.custom_safe(proc, 1) #f1 要设置为操帆
+            dolSafeCall.custom(proc, 1) #f1 要设置为操帆
             time.sleep(2)
             
         statetxt = dolScript.getShipState(proc)
         if(statetxt == "鼠患" or statetxt == "海藻"):
-            __log("发现<%s>,发动驱除技能" % (statetxt)) 
+            log("发现<%s>,发动驱除技能" % (statetxt)) 
             __dowhile(dolScript.isNormal, [proc])
-            dolSafeCall.custom_safe(proc, 4)#f4 驱除
+            dolSafeCall.custom(proc, 4)#f4 驱除
             time.sleep(2) 
         
         
         sCount, sList = dolScript.getSkill(proc) 
         
         if(sCount != 3 and 75 not in sList): #75 == 警戒
-            __log("发动警戒技能") 
+            log("发动警戒技能") 
             __dowhile(dolScript.isNormal, [proc])
-            dolSafeCall.custom_safe(proc, 3)#f3 警戒
+            dolSafeCall.custom(proc, 3)#f3 警戒
             time.sleep(2)
             
             
         if(sCount != 3 and 12 not in sList): #12 == 钓鱼
-            __log("发动钓鱼技能")
+            log("发动钓鱼技能")
             __dowhile(dolScript.isNormal, [proc])
-            dolSafeCall.custom_safe(proc, 2) #f2 钓鱼
+            dolSafeCall.custom(proc, 2) #f2 钓鱼
             time.sleep(2)
         
         preFatigue = dolScript.getFatigue(proc)
         if(preFatigue > 40):
             while(preFatigue > 40):
-                __log("要消除疲劳, 疲劳 = %f" % (preFatigue))
+                if(not dolScript.isOnline(proc)):
+                    break
+                
+                
+                log("要消除疲劳, 疲劳 = %f" % (preFatigue))
                 __dowhile(dolScript.isNormal, [proc])
-                dolSafeCall.custom_safe(proc, 8) #f8 要设置为料理
+                dolSafeCall.custom(proc, 7) #f7 要设置为料理
                 fatigue = dolScript.getFatigue(proc)
                 time.sleep(2)
-                __log("吃了一个料理, 疲劳 = %f" % (fatigue))
+                log("吃了一个料理, 疲劳 = %f" % (fatigue))
                 
                 if(fatigue == preFatigue):
-                    __log("料理并不能降低疲劳")
+                    log("料理并不能降低疲劳")
                     break
                 else:
                     preFatigue = fatigue
@@ -330,3 +342,23 @@ def sailing(hwnd, proc, hwndList):
         time.sleep(0.3)
     sailingLock.Release()
     print "Lock released"
+    
+def __BuildShip(hwnd, proc, onSea = None):
+    if(onSea == None):
+        onSea = False
+    else:
+        onSea = True
+    print onSea
+    city = blt()
+    shipid = 0x19 #小飞
+    woodid = 1
+    storage = 180
+    ticketnum = 2
+    day = 6
+    
+    
+    
+    dolBuildShipScript.buildShip(hwnd, proc, city, shipid, woodid, storage, ticketnum, day, onSea)
+
+
+    

@@ -15,7 +15,7 @@ options = {
                        'dll_excludes': [
                             'MSVCP90.dll', "mswsock.dll", "powrprof.dll"
                             ],
-                        'optimize' : 2,
+                        'optimize' : 1,
                         'compressed' : True,
                         'bundle_files' : 1,
                           
