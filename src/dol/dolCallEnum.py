@@ -5,6 +5,8 @@ class MoveTo:
     BizHouse = 0x91 #商务会馆
     DockPlaza = 0x8e #码头广场
     Dock = 0x42 #进入码头
+    Palace = 0x7a #进入皇宫
+    Land = 0x92 #陆地
     
 class LocType:
     Sea = 0x4 #海洋

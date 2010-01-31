@@ -17,6 +17,8 @@ from global_ import *
 area = dolCallCmd.TW
 
 changeDelay = 2 # 切换场景类的操作的等待延时
+CMDSIZE = 1024
+PARASIZE = 24
 
 class MemException(Exception):
     pass
@@ -62,7 +64,7 @@ def writeCmd(proc, cmdList):
     '''
     注意：如果成功，需要使用者自行释放内存
     '''
-    size = 1024
+    size = CMDSIZE
     
     assert len(cmdList) == size
     cmd = (c_ubyte * size)()
@@ -94,7 +96,8 @@ def writePara(proc, cPara):
     '''
     注意：如果成功，需要使用者自行释放内存
     '''
-    size = 24
+    #
+    size = sizeof(cPara)
         
     buf = VirtualAllocEx(proc.handle, None, size, win32con.MEM_COMMIT, win32con.PAGE_READWRITE)
     if(buf == 0):
@@ -138,6 +141,43 @@ def execCmd(proc, cmdBuf, paraBuf):
         raise MemException("Release memory failed!")
     
     print "Cleaned"
+    
+def writeMem(proc, addr, writeBuf):
+    
+    
+    
+     
+    written = c_long(0)
+    
+    size = sizeof(writeBuf)
+    ret = WriteProcessMemory(proc.handle, addr, byref(writeBuf), size, byref(written))
+    
+    if(written.value != size):
+        raise MemException("WriteProcessMemory() does NOT write the complete content!")
+    if(ret == 0):
+        raise MemException('WriteProcessMemory() fails!')
+
+
+def __openDialog(proc, bossid, dialogID):
+    '''
+    开启游戏的对话框
+    '''
+    cpara = (c_ubyte * PARASIZE)()
+    ip = cast(cpara, POINTER(c_int))
+    ip[0] = bossid
+    ip[1] = 0
+    ip[2] = dialogID
+    
+    paraBuf = writePara(proc, cpara)
+    cmdBuf = writeCmd(proc, area.openDialogCmd)
+    
+    dowhile(isNormal, [proc])
+    execCmd(proc, cmdBuf, paraBuf)
+    time.sleep(changeDelay)
+
+#===============================================================================
+# Specific functions    
+#===============================================================================
 
 def walk(proc, x, y):
     x = float(x)
@@ -148,7 +188,7 @@ def walk(proc, x, y):
     while(nowx != x and nowy != y):
         cmdBuf = writeCmd(proc, area.walkCmd)
         
-        cpara = (c_ubyte * 24)()
+        cpara = (c_ubyte * PARASIZE)()
     
         fpara = cast(cpara, POINTER(c_float))
         #print "x=%f, y=%f" % (x,y)
@@ -181,8 +221,8 @@ def follow(proc, userid):
     
     cmdBuf = writeCmd(proc, area.followCmd)
     
-    paraSize = 24
-    cpara = (c_ubyte * paraSize)()
+    
+    cpara = (c_ubyte * PARASIZE)()
     
     for i in range(len(area.followPara)):
         cpara[i] = area.followPara[i]
@@ -216,8 +256,8 @@ def seafollow(proc, userid):
     userid = int(userid)
     
     cmdBuf = writeCmd(proc, area.seaFollowCmd)  
-    paraSize = 24
-    cpara = (c_ubyte * paraSize)()
+    
+    cpara = (c_ubyte * PARASIZE)()
     for i in range(len(area.seaFollowPara)):
         cpara[i] = area.seaFollowPara[i]
     
@@ -237,8 +277,8 @@ def move(proc, moveto):
     userid = dolScript.getPCID(proc)
     moveto = int(moveto)
         
-    paraSize = 24
-    cpara = (c_ubyte * paraSize)()
+    
+    cpara = (c_ubyte * PARASIZE)()
     ip = cast(cpara, POINTER(c_int))
     ip[0] = userid
     ip[1] = moveto
@@ -260,8 +300,8 @@ def moveSea(proc):
     '''
     
     userid = dolScript.getPCID(proc)
-    paraSize = 24
-    cpara = (c_ubyte * paraSize)()
+    
+    cpara = (c_ubyte * PARASIZE)()
     ip = cast(cpara, POINTER(c_int))
     ip[0] = userid
     ip[1] = 0x41d34c
@@ -288,20 +328,12 @@ def turn(proc, deg):
     cos = math.cos(math.radians(deg))
     sin = -math.sin(math.radians(deg))
     
-    paraSize = 24
-    cpara = (c_ubyte * paraSize)()
+    
+    cpara = (c_ubyte * PARASIZE)()
     fp = cast(cpara, POINTER(c_float))
     fp[0] = cos
     fp[1] = sin
     
-    ip = cast(cpara, POINTER(c_int))
-    
-    #===========================================================================
-    # ip[2] = random.randrange(0xa40000, 0xef0000)
-    # ip[3] = random.randrange(0xef0000, 0xf0ffff)
-    # ip[4] = random.randrange(0xa4e900, 0xa4e9ff)
-    # ip[5] = random.randrange(0xef0000, 0xf0ffff)
-    #===========================================================================
     
     paraBuf = writePara(proc, cpara)
     cmdBuf = writeCmd(proc, area.turnCmd)
@@ -318,8 +350,8 @@ def custom(proc, num):
         return
 
     num -= 1
-    paraSize = 24
-    cpara = (c_ubyte * paraSize)()
+    
+    cpara = (c_ubyte * PARASIZE)()
     ip = cast(cpara, POINTER(c_int))
     ip[0] = num
     ip[1] = 0x41e868
@@ -392,8 +424,8 @@ def enterD(proc):
 def enterDoor(proc, did):
     '''
     '''
-    paraSize = 24
-    cpara = (c_ubyte * paraSize)()
+    
+    cpara = (c_ubyte * PARASIZE)()
     ip = cast(cpara, POINTER(c_int))
     ip[0] = did
     ip[1] = 0x41d34c
@@ -415,8 +447,8 @@ def sail(proc, state):
     state = int(state)
     assert state >= 0 and state <= 4
     
-    paraSize = 24
-    cpara = (c_ubyte * paraSize)()
+    
+    cpara = (c_ubyte * PARASIZE)()
     ip = cast(cpara, POINTER(c_int))
     ip[0] = state
     ip[1] = 0x41fd08
@@ -463,7 +495,7 @@ def getNPC(proc):
         #print name
         x = getFloat(proc, namebase + 0x3c + 0xe0)
         y = getFloat(proc, namebase + 0x3c + 0xe0 + 0x8)
-        unknown = getFloat(proc, namebase + 0x3c + 0xe0 + 0x4)
+        #unknown = getFloat(proc, namebase + 0x3c + 0xe0 + 0x4)
         if(x != 0):
             print "id = %8x, name = %s, x = %.3f, y = %.3f" % (id, name,x, y)
         
@@ -511,20 +543,9 @@ def sellShip(proc, bossid):
      
     
     if(not __isOpened(proc)):
-        paraSize = 24
-        cpara = (c_ubyte * paraSize)()
-
         
-        ip = cast(cpara, POINTER(c_int))
-        ip[0] = bossid
-        ip[1] = 0
-        ip[2] = 0x53
         
-        paraBuf = writePara(proc, cpara)
-        cmdBuf = writeCmd(proc, area.openSellShipCmd)
-        
-        dowhile(isNormal, [proc])
-        execCmd(proc, cmdBuf, paraBuf)
+        __openDialog(proc, bossid, 0x53)
     
         while(True):
             if(__isOpened(proc)):
@@ -535,8 +556,8 @@ def sellShip(proc, bossid):
     
     para2 = __getSellPara(proc)
     
-    paraSize = 24
-    cpara = (c_ubyte * paraSize)()
+    
+    cpara = (c_ubyte * PARASIZE)()
     ip = cast(cpara, POINTER(c_int))
     ip[0] = bossid
     ip[1] = para2
@@ -545,7 +566,7 @@ def sellShip(proc, bossid):
     paraBuf = writePara(proc, cpara)
     cmdBuf = writeCmd(proc, area.sellShipCmd)
     
-    time.sleep(4)
+    time.sleep(4) #sleep for sell the correct ship, but it doesn't works....
     dowhile(isNormal, [proc])
     execCmd(proc, cmdBuf, paraBuf)
     
@@ -555,8 +576,8 @@ def talk(proc, tarid):
     '''
     tarid = int(tarid)
     
-    paraSize = 24
-    cpara = (c_ubyte * paraSize)()
+    
+    cpara = (c_ubyte * PARASIZE)()
 
     
     ip = cast(cpara, POINTER(c_int))
@@ -577,8 +598,8 @@ def buildShip(proc, shipid, woodid, storage, bossid):
     storage = int(storage)
     bossid = int(bossid)
     
-    paraSize = 24
-    cpara = (c_ubyte * paraSize)()
+    
+    cpara = (c_ubyte * PARASIZE)()
 
     
     ip = cast(cpara, POINTER(c_int))
@@ -593,5 +614,96 @@ def buildShip(proc, shipid, woodid, storage, bossid):
     
     dowhile(isNormal, [proc])
     execCmd(proc, cmdBuf, paraBuf)
+
+
+
+def __getFoodMenu(proc):
+    
+    addr = getInt(proc, 0xBD805C)
+    
+    seq = getShort(proc, addr + 0x604)
+    
+    seqAddr = 0xafd398
+    
+    status = getInt(proc, seqAddr)
+    print "%x" % (status)
+    
+    if(seq != status):
+        
+        
+        writeMem(proc, seqAddr, c_int(seq))
+        
+        status = getInt(proc, 0xafd398)
+        print "%x" % (status)
+    
+    
+    addr = getInt(proc, addr + 0x5ec)
+    
+    foodList = []
+    
+    while(addr != 0):
+        print "addr = %x" % (addr)
+        food = getInt(proc, addr + 8)
+        foodList.append(food)
+        addr = getInt(proc, addr)
+        print "food = %x, nextaddr = %x" % (food, addr)
+    
+    return (seq, foodList)
+
+def eat(proc, bossid, water, food):
+    
+    bossid = int(bossid)
+    water = int(water)
+    food = int(food)
+    
+    
+    cpara = (c_ubyte * PARASIZE)()
+    ip = cast(cpara, POINTER(c_int))
+    ip[0] = bossid
+    ip[1] = 0
+    ip[2] = 0x70
+    
+    paraBuf = writePara(proc, cpara)
+    cmdBuf = writeCmd(proc, area.openDialogCmd)
+    
+    dowhile(isNormal, [proc])
+    execCmd(proc, cmdBuf, paraBuf)
+    
+    time.sleep(2)
+    
+    seq, foodList = __getFoodMenu(proc)
+    
+    foodLen = len(foodList)
+    if(water < 0 or water > foodLen or food < 0 or food > foodLen):
+        print "Invalid parameter"
+        return
+    
+    waterid = None
+    if(water == 0):
+        waterid = 0
+    else:
+        waterid = foodList[water - 1]
+    
+    foodid = None
+    if(food == 0):
+        foodid = 0
+    else:
+        foodid = foodList[food - 1]
+    
+    
+    
+    cpara = (c_ubyte * PARASIZE)()
+    ip = cast(cpara, POINTER(c_int))
+    ip[0] = seq
+    ip[1] = foodid
+    ip[2] = waterid
+    ip[3] = bossid
+    
+    paraBuf = writePara(proc, cpara)
+    cmdBuf = writeCmd(proc, area.eatCmd)
+    
+    dowhile(isNormal, [proc])
+    execCmd(proc, cmdBuf, paraBuf)
+    
     
     

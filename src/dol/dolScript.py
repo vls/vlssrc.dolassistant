@@ -2,7 +2,7 @@
 import sys
 sys.path.append("..")
 from w32 import w32
-from _global import MyList
+#from _global import MyList
 import helper
 from ctypes import *
 from dolAddr import ADDR
