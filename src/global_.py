@@ -1,5 +1,6 @@
 import sys
 
+
 class MyList(list):
     def __str__(self):
         str = ''

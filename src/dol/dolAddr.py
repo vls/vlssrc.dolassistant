@@ -19,7 +19,7 @@ class ADDR:
     PC_STATE = 0xB6F97C				# 1 =正常, 0 =断线
     
     
-    
+    NPC = 0xb6ffa4 #搜索周围npc/玩家的基址
     
     #section 2
     COMBAT_STATE = 0xB6FA3c             #战斗状态         0=正常 1=主动攻击 2=被攻击 3= 模拟主动攻击 4= 模拟被动攻击
@@ -63,9 +63,9 @@ class ADDR:
     
     SAIL_STATE = SEA_FOLLOW - 0x6c
     
-    TAB_PCBASE = SEA_FOLLOW + 0xCC - 0x68   #TAB 选择人物及NPC对象基址
+    TAB_PCBASE = SEA_FOLLOW + 0xCC - 0x68   #TAB 选择人物及NPC对象基址  #B6FFA4
     
-    TAB_STATIC = SEA_FOLLOW + 0xEC - 0x68   #TAB 选择静物对象基址
+    TAB_STATIC = SEA_FOLLOW + 0xEC - 0x68   #TAB 选择静物对象基址 #B6FFC4
     
     LOCATION = SEA_FOLLOW + 0xb0c -0xa68    #所在地方名称基址（包括港口，室内，海域）[[ADDR]]
     
@@ -74,16 +74,25 @@ class ADDR:
     
     PARTY_BASE = SEA_FOLLOW + 0xb78 - 0xa68    #队伍基址 [[ADDR]+C]
     
-    TAB_STATIC2 = TAB_STATIC + 0x690    #静物对象2级
+    TAB_STATIC2 = TAB_STATIC + 0x690    #静物对象2级 #B70654
     
     #section 4
-    BOOL_CUSTOM = 0xb536c8 + OFFSET + 0x40
+    BOOL_CUSTOM = 0xb536c8 + OFFSET + 0x40  #
     
     
     
     #section 5
-    WEATHER = 0xB538D5 + OFFSET + 0x60 #验证 2010/1/1
+    TIDE = 0x00B71A61               #潮流
+    WAVE = 0x00B71A62               #浪高
+    
+    WEATHER = 0xB538D5 + OFFSET + 0x60 #验证 2010/1/1 #
     SAIL_DAY = WEATHER + 3
+    
+    SKILL_BASE = 0xBD8388        #ADDR+0x20+0x38 = 技能数
+    
+    #  ADDR + 0x20 + 0xC #技能1ID
+    #ADDR + 0x20 + 0x14 #技能2ID
+    #ADDR + 0x20 + 0x1C #技能3ID
     
     @staticmethod
     def getIntList():
@@ -105,9 +114,7 @@ class ADDR:
 
 
     
-#SKILL_BASE = 0xBD8388		#ADDR+0x20+0x38 = 技能数目
-#  ADDR + 0x20 + 0xC #技能1ID
-#ADDR + 0x20 + 0x14 #技能2ID
-#ADDR + 0x20 + 0x1C #技能3ID
+
+
 
 #

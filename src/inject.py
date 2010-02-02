@@ -237,17 +237,23 @@ def main(argv=sys.argv):
                 
             except AttributeError as e:
                 #print e
-                
+                flagRun = False
                 for name in modList:
                     try:
                         mod = __getMod(name)
                         #print mod
                         func = getattr(mod, funcName)
+                        
+                        print "In module : %s" % (mod)
                         func(hProc, *args)
+                        flagRun = True
                         break
                     except AttributeError as e:
                         #print e
-                        pass            
+                        pass
+                
+                if(not flagRun):
+                    print "no module has func named %s" % (funcName)           
         else:
             usage()
     finally:

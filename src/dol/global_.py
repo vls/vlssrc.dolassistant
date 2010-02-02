@@ -6,6 +6,19 @@ from ctypes import c_wchar_p, c_ulong, c_char_p, c_ubyte, c_uint, c_float, c_int
 import win32api, win32con
 import traceback
 import sys
+sys.path.append("..")
+
+
+
+class MyList(list):
+    def __str__(self):
+        str = ''
+        for x in self:
+            str += repr(x)
+            str += ', '
+        return '[%s]' % (str[:-2])
+
+
 
 kernel32 = windll.kernel32
 VirtualAllocEx = kernel32.VirtualAllocEx

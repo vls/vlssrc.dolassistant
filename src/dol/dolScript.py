@@ -270,7 +270,6 @@ def getPCID(proc):
     '''
     return getInt(proc, ADDR.PC_ID)
             
-
 def isSceneChange(proc):
     '''是否场景切换
         return bool
@@ -328,7 +327,7 @@ def getSkill(proc):
     获取使用技能状态
     (数目， 技能1ID, 技能2ID, 技能3ID)
     '''
-    addr = getInt(proc, 0xBD8388)
+    addr = getInt(proc, ADDR.SKILL_BASE)
     addr = getInt(proc, addr+0x20)
     
     num = getInt(proc, addr + 0x38)
@@ -361,6 +360,62 @@ def getSailDay(proc):
     航行天数
     '''
     return getInt(proc, ADDR.SAIL_DAY)
+
+def getTide(proc):
+    '''
+    潮流
+    '''
+    return getByte(proc, ADDR.TIDE)
+
+def getWave(proc):
+    '''
+    浪高
+    '''
+    return getByte(proc, ADDR.WAVE)
+
+
+def getNPC(proc):
+    '''
+    获取周围一定范围的NPC和玩家
+    '''
+    
+    addr = getInt(proc, ADDR.TAB_PCBASE)
+    
+    addr_2 = getInt(proc, addr)
+    while(addr_2 == 0):
+        addr += 4
+        addr_2 = getInt(proc, addr)
+    for i in range(1000):
+        #print "----------------------Round %d -------------------------" % (i)
+        #print "addr_2 before = %x" % (addr_2)
+        id = getInt(proc, addr_2)
+        
+        if(id == 0):
+            break
+        
+        namebase = getInt(proc, addr_2 + 4)
+        addr_2 = getInt(proc, addr_2 + 8)
+        #print "addr_2 after = %x" % (addr_2)
+        #print "%x" %( namebase)
+        namebase_2 = getInt(proc, namebase + 0x3c)
+        #print "%x" % ( namebase_2)
+        name = getStringW(proc, namebase_2, 40)
+        #name2 = getString(proc, namebase_2, 40)
+        #print name2
+        #print unicode(name2).encode('gbk')
+        #print name.encode('utf-8')
+        #print name
+        x = getFloat(proc, namebase + 0x3c + 0xe0)
+        y = getFloat(proc, namebase + 0x3c + 0xe0 + 0x8)
+        #unknown = getFloat(proc, namebase + 0x3c + 0xe0 + 0x4)
+        if(x != 0):
+            print "id = %8x, name = %s, x = %.3f, y = %.3f" % (id, name,x, y)
+        
+        
+        while(addr_2 == 0):
+            addr += 4
+            addr_2 = getInt(proc, addr)
+            #print "addr_2 Adjust = %x" % (addr_2)
 
 #===============================================================================
 # main相关函数
@@ -420,6 +475,8 @@ if __name__ == "__main__":
         print '天气 = %x' %(getWeather(pro))
         print '航行状态 = %s' %(getShipState(pro))
         print '帆位 = %d' % (getSailState(pro))
+        print '潮流 = %d' % (getTide(pro))
+        print '浪 = %d' % (getWave(pro))
 #        while(True):
 #            print '海洋坐标: x=%.3f, y=%.3f' % getSeaPos(pro, (0x400, 0xbff))
 #            print '陆地坐标: x=%.3f, y=%.3f' % getLandPos(pro)
