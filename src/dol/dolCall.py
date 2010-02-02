@@ -10,6 +10,7 @@ from dolAddr import ADDR
 import dolScript
 import dolCallCmd
 from global_ import *
+from dolCallEnum import SellInfo, BuyInfo, ToBuy
 
 
 
@@ -723,13 +724,58 @@ def eat(proc, bossid, water, food):
 def __getBuyCount(value):
     return dolCallEnum.buyCountDict[value]
 
-class good:
-    pass
 
 
-def buy(proc):
-    seqAddr = 0xafd398
-    print "%x" % (getByte(proc, seqAddr))
+
+def __split(info, tobuyNum):
+    tupleList = []
+    if(tobuyNum >= info[2][1]):
+        while(True):
+            slot = info[2][0]
+            times = tobuyNum // info[2][1]
+            tupleList.append((slot, times))
+            
+            remain = tobuyNum % info[2][1]
+            if(remain != 0 and remain >= info[0][1]): #还有剩余要买 且 是最小slot可以cover的
+                if(info[1][1] % info[0][1] == 0): #如果第一个slot 是包含第二个slot的约数
+                    slot = info[0][0]
+                    times = tobuyNum // info[0][1]
+                    tupleList.append((slot, times))
+                    break
+                else:
+                    candidate = None
+                    if(remain >= info[1][1]): #如果剩余要买的多于第二个slot
+                        times = remain // info[1][1]
+                        diff = remain - info[1][1] * times
+                        slot = info[1][0]
+                        
+                        if(diff == 0):#如果第二个slot已经可以买全
+                            tupleList.append((slot, times))
+                            break
+                        
+                        candidate = (diff, slot, times)
+                    else:
+                        times = remain // info[0][1]
+                        slot = info[0][0]
+                        tupleList.append((slot, times))
+                        break
+                    
+                    times = remain // info[0][1]
+                    diff = remain - info[0][1] * times
+                    slot = info[0][0]
+                    
+                    if(diff == 0):#如果第一个slot已经可以买全
+                        tupleList.append((slot, times))
+                        break
+            break
+        
+
+def buy(proc, buyList):
+    
+    #===========================================================================
+    # seqAddr = 0xafd398
+    # print "%x" % (getByte(proc, seqAddr))
+    #===========================================================================
     
     bossid = 0x18005d6
     bossid = int(bossid)
@@ -742,7 +788,11 @@ def buy(proc):
     count = getInt(proc, goodaddr)
     print "good's count = %d" % (count)
     
-    print "a number = %x" % (getInt(proc, goodaddr - 0x40))
+    if(count != len(buyList)):
+        print 'Invalid *buylist*, whose length is not equal to the count of selling '
+        return
+    
+    #print "a number = %x" % (getInt(proc, goodaddr - 0x40))
     
     goodList = []
     
@@ -758,11 +808,11 @@ def buy(proc):
         remain = getShort(proc, tempaddr + 0x18)
         addr = getInt(proc, addr)
         print "goodId = %x, name = %s, remain = %d" % (goodid, name, remain)
-        go = good()
+        go = BuyInfo()
         go.id = goodid
         go.name = name
         go.remain = remain
-        goodList.append(good)
+        goodList.append(go)
     
     addr = getInt(proc, goodaddr - 4)
     addr += 0x24
@@ -776,14 +826,37 @@ def buy(proc):
         buyCount_3 = getByte(proc, dataaddr + 0x58)
         
         buyCount = [buyCount_1, buyCount_2, buyCount_3]
-        print buyCount
+        #print buyCount
         realBuyCount = [ __getBuyCount(x) for x in buyCount]
-        print realBuyCount
+        #print realBuyCount
         
-        buySeq = [getInt(proc, dataaddr + 0x8), getInt(proc, dataaddr + 0x28), getInt(proc, dataaddr + 0x48)]
+        buyPrice = [getInt(proc, dataaddr + 0x8), getInt(proc, dataaddr + 0x28), getInt(proc, dataaddr + 0x48)]
         #for seq in buySeq:
         #    print "%x" % (seq)
-        print zip(buyCount, realBuyCount, buySeq)
+        
+        info = tuple(zip(buyCount, realBuyCount, buyPrice)) 
+        
+        goodList[i].info = info
+
+    tobuyList = []
+
+    for i in range(count):
+        remain = goodList[i].remain
+        buyNum = -1
+        if(buyList[i] == -1):
+            buyNum = 0
+        elif(buyList[i] == 0):
+            tobuy = ToBuy()
+            buyNum = goodList[i].info[0][1]
+            if(remain < buyNum):
+                continue
+            tobuy.id = goodList[i].id
+            tobuy.slot = goodList[i].info[0][0] + 0xA3
+            tobuy.price = goodList[i].info[0][2]
+            tobuy.times = 1
+            tobuyList.append(tobuy)
+        elif(buyList[i] >= 999):
+            tobuy = ToBuy()
 
 def sell(proc):
     bossid = 0x18005d6
@@ -796,6 +869,9 @@ def sell(proc):
     
     base = getInt(proc, addr + 0x628 + 0xC)
     base += 8
+    
+    infoList = []
+    
     for i in range(count):
         addr = getInt(proc, base)
         print "addr = %x" % (addr)
@@ -804,35 +880,48 @@ def sell(proc):
         gid = getInt(proc, infobase + 0xC)
         num = getShort(proc, infobase + 0xC + 0x8)
         price = getInt(proc, infobase + 0xC + 0xC)
-        snum = getFloat(proc, infobase + 0xC + 0x14)
-        print "seq = %x, gid = %x, num = %d, price = %d, snum = %.3f" % (seq, gid, num, price, snum)
+        cost = getFloat(proc, infobase + 0xC + 0x14)
+        print "seq = %x, gid = %x, num = %d, price = %d, cost = %.3f" % (seq, gid, num, price, cost)
         base += 0xC
         
+        info = SellInfo()
+        info.seq = seq
+        info.id = gid
+        info.num = num
+        info.price = price
+        info.cost = cost
+        infoList.append(info)
         
-
-def __testGet(proc):
-    gid = 0x186c63
-    A = 0x04BECE60
-    B = 0x11
-    newaddr = A + (gid // 16 % B) * 4
-    print "%x" % (gid // 16)
-    print "newaddr = %x" % (newaddr)
-    addr = getInt(proc, newaddr)    
-    print "addr = %x" % (addr)
-    while(addr != 0):
-        fid = getInt(proc, addr)
-        print "fid = %x" % (fid)
-        if(fid == gid):
-            break;
-        addr = getInt(proc, addr + 0x08)
-        print "addr = %x" % (addr)
+    addr = 0xAFD3A8
+    for i in range(count):
+        info = infoList[i]
+        writeMem(proc, addr, c_int(info.seq))
+        writeMem(proc, addr + 4, c_int(0))
+        writeMem(proc, addr + 8, c_int(0))
+        writeMem(proc, addr + 0xC, c_int(info.num))
+        writeMem(proc, addr + 0x10, c_int(info.price))
+        addr += 0x14
     
-    addr = 0x039601C0
-    addr = getInt(proc, addr+0xC)
-    print "addr = %x" % (addr)
-    nameLength = getInt(proc, addr -12)
-    name = getStringW(proc, addr, nameLength)
-    print name
+    addr = 0xAFD39C
+    writeMem(proc, addr, c_uint(0x9F489C))
+    writeMem(proc, addr + 4, c_uint(0xAFD3A8))
+    writeMem(proc, addr + 8, c_int(count))
+    
+    cpara = (c_ubyte * PARASIZE)()
+    ip = cast(cpara, POINTER(c_uint))
+    ip[0] = addr
+    ip[1] = bossid
+    ip[2] = 0x4d
+    ip[3] = 0
+    ip[4] = 0
+    ip[5] = 0
+    
+    paraBuf = writePara(proc, cpara)
+    cmdBuf = writeCmd(proc, area.sellCmd)
+    
+    dowhile(isNormal, [proc])
+    execCmd(proc, cmdBuf, paraBuf)
+    
         
 def __testTrade(proc):
     
