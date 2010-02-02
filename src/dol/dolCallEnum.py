@@ -1,16 +1,23 @@
-# -*- coding: GBK -*-
+# -*- coding: utf-8 -*-
 class MoveTo:
-    Plaza = 0x8f # 广场
-    Biz = 0x90 #商业
-    BizHouse = 0x91 #商务会馆
-    DockPlaza = 0x8e #码头广场
-    Dock = 0x42 #进入码头
-    Palace = 0x7a #进入皇宫
-    Land = 0x92 #陆地
+    Plaza = 0x8f # 骞垮満
+    Biz = 0x90 #鍟嗕笟
+    BizHouse = 0x91 #鍟嗗姟浼氶
+    DockPlaza = 0x8e #鐮佸ご骞垮満
+    Dock = 0x42 #杩涘叆鐮佸ご
+    Palace = 0x7a #杩涘叆鐨囧
+    Land = 0x92 #闄嗗湴
     
 class LocType:
-    Sea = 0x4 #海洋
-    City = 0x8 #城市
-    House = 0xc # 室内
-    Dock = 0x1c # 码头
-    
+    Sea = 0x4 #娴锋磱
+    City = 0x8 #鍩庡競
+    House = 0xc # 瀹ゅ唴
+    Dock = 0x1c # 鐮佸ご
+
+buyCountDict = {
+            0:1,
+            1:2,
+            2:5,
+            3:10,
+            4:20,
+            5:50}

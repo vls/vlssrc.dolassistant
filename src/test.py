@@ -32,8 +32,8 @@ def main():
     
     mxy = dolScript.getMousePos(hwnd, 0, 0)
     #pyqmacro.invoke('BGKM5.dll','LClick',[hwnd, mxy[0], mxy[1]])
-    ret = dll.Mouse("LClick", hwnd, 200, 200)
-    #ret = dll.Key("KeyClick", hwnd, 49)
+    #ret = dll.Mouse("LClick", hwnd, 200, 200)
+    ret = dll.Key("KeyClick", hwnd, 40)
 
     print win32gui.SetActiveWindow(hwnd)
     print win32api.GetLastError()

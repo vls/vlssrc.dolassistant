@@ -2,8 +2,6 @@
 
 from ctypes import *
 import sys
-
-sys.path.append("..")
 import helper
 import win32process
 import win32api
@@ -14,8 +12,10 @@ import pywintypes
 import random
 import win32event
 import getopt
-from dol import dolCall
+from dol import dolCall, dolScript, dolFirmScript
 import dol
+from global_ import __reloadMod
+
 
 
 kernel32 = windll.kernel32
@@ -155,7 +155,21 @@ def inject(proc, dllName):
     win32api.CloseHandle(tHandle)
     print "Cleaned"
     
-
+def __getMod(modFullName):
+    names = modFullName.split('.')
+    #print names
+    if(len(names) == 0):
+        return None
+    
+    mod = __reloadMod(names[0])
+    #print mod
+    for i in range(1, len(names)):
+        #print names[i]
+        #print dir(mod)
+        mod = getattr(mod, names[i])
+        #print mod
+    return mod
+        
 
 def usage():
     print "inject -p <process> <dll>"
@@ -203,8 +217,14 @@ def main(argv=sys.argv):
         elif(optdict.has_key('-f')):
             funcName = optdict['-f']
             
+            modList = ['dol.dolCall', 'dol.dolScript', 'dol.dolFirmScript']
+            
+            
+            
             mod = __import__('scripts')
-
+            
+                
+            
             try:
                 func = getattr(mod, funcName)
                 prochelper = helper.ProcessHelper()
@@ -216,13 +236,18 @@ def main(argv=sys.argv):
                 func(*args)
                 
             except AttributeError as e:
-                print e
-                mod = __import__('dol')
-                print mod
-                mod = getattr(mod, 'dolCall')
-                func = getattr(mod, funcName)
-                func(hProc, *args)
-            
+                #print e
+                
+                for name in modList:
+                    try:
+                        mod = __getMod(name)
+                        #print mod
+                        func = getattr(mod, funcName)
+                        func(hProc, *args)
+                        break
+                    except AttributeError as e:
+                        #print e
+                        pass            
         else:
             usage()
     finally:

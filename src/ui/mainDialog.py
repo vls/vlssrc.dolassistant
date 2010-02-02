@@ -19,6 +19,7 @@ import win32con
 from w32 import w32
 import inspect
 from ctypes import *
+from global_ import *
 
 def MessageBox(hwnd, string, caption, flag):
     string = string.decode('utf-8')
@@ -79,15 +80,7 @@ class mainDialog(QMainWindow, Ui_mainDialog):
         self.addAction(action)
     
     
-    def __reloadMod(self, modstr):
-        modstr = 'scripts'
-        if sys.modules.has_key(modstr):
-            module = sys.modules[modstr]
-            reload(module)
-        else:
-            module = __import__(modstr)
-        
-        return module
+
 
         
     def loadItems(self):

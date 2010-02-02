@@ -174,6 +174,32 @@ def __openDialog(proc, bossid, dialogID):
     dowhile(isNormal, [proc])
     execCmd(proc, cmdBuf, paraBuf)
     time.sleep(changeDelay)
+    
+def __translate(proc):
+    byteList = [0x61,0x84,0x04,0x84,0x52,0x91]
+    #byteList = [0x1F,0x67,0x85,0x5F,0xC2,0x53,0x18,0x62,0x84,0x76,0x04,0x54,0x4D,0x4F,0xAA,0x52,0x9B,0x52,0x4B,0x59,0x97,0x65,0x02,0x30]
+    byteList.append(0)
+    length = len(byteList)
+    buf = (c_ubyte * length)()
+    print buf
+    for i in range(length):
+        buf[i] = byteList[i]
+    
+    addr = writePara(proc, buf)
+    print getStringW(proc, addr, 40)
+    
+    ret = VirtualFreeEx(proc.handle, addr, 0, win32con.MEM_RELEASE)
+    if(ret == 0):
+        raise MemException("Release memory failed!")
+
+def __gettab(proc):
+    print "0x%x" % (dolScript.getTabId(proc))
+
+def __getstr(proc, addr):
+    addr = int(addr)
+    string =  getStringW(proc, addr, 0x18)
+    print string
+    print len(string)
 
 #===============================================================================
 # Specific functions    
@@ -629,8 +655,6 @@ def __getFoodMenu(proc):
     print "%x" % (status)
     
     if(seq != status):
-        
-        
         writeMem(proc, seqAddr, c_int(seq))
         
         status = getInt(proc, 0xafd398)
@@ -655,21 +679,10 @@ def eat(proc, bossid, water, food):
     bossid = int(bossid)
     water = int(water)
     food = int(food)
+
     
+    __openDialog(proc, bossid, 0x70)
     
-    cpara = (c_ubyte * PARASIZE)()
-    ip = cast(cpara, POINTER(c_int))
-    ip[0] = bossid
-    ip[1] = 0
-    ip[2] = 0x70
-    
-    paraBuf = writePara(proc, cpara)
-    cmdBuf = writeCmd(proc, area.openDialogCmd)
-    
-    dowhile(isNormal, [proc])
-    execCmd(proc, cmdBuf, paraBuf)
-    
-    time.sleep(2)
     
     seq, foodList = __getFoodMenu(proc)
     
@@ -704,6 +717,154 @@ def eat(proc, bossid, water, food):
     
     dowhile(isNormal, [proc])
     execCmd(proc, cmdBuf, paraBuf)
+
+
+
+def __getBuyCount(value):
+    return dolCallEnum.buyCountDict[value]
+
+class good:
+    pass
+
+
+def buy(proc):
+    seqAddr = 0xafd398
+    print "%x" % (getByte(proc, seqAddr))
+    
+    bossid = 0x18005d6
+    bossid = int(bossid)
+    
+    __openDialog(proc, bossid, 0x4C)
+    
+    addr = getInt(proc, 0xBD805C)
+    goodaddr = addr + 0x628
+        
+    count = getInt(proc, goodaddr)
+    print "good's count = %d" % (count)
+    
+    print "a number = %x" % (getInt(proc, goodaddr - 0x40))
+    
+    goodList = []
+    
+    addr = getInt(proc, goodaddr + 0x40)
+    while(addr != 0):
+        tempaddr = getInt(proc, addr + 8)
+        goodid = getInt(proc, tempaddr + 8)
+        num1 = getInt(proc, tempaddr + 8 + 4)
+        namelen = getInt(proc, num1 - 8)
+        
+        name = getStringW(proc, num1, namelen)
+        
+        remain = getShort(proc, tempaddr + 0x18)
+        addr = getInt(proc, addr)
+        print "goodId = %x, name = %s, remain = %d" % (goodid, name, remain)
+        go = good()
+        go.id = goodid
+        go.name = name
+        go.remain = remain
+        goodList.append(good)
+    
+    addr = getInt(proc, goodaddr - 4)
+    addr += 0x24
+    for i in range(count):
+        
+        
+        dataaddr = getInt(proc, addr + i * 0x40)
+        
+        buyCount_1 = getByte(proc, dataaddr + 0x18)
+        buyCount_2 = getByte(proc, dataaddr + 0x38)
+        buyCount_3 = getByte(proc, dataaddr + 0x58)
+        
+        buyCount = [buyCount_1, buyCount_2, buyCount_3]
+        print buyCount
+        realBuyCount = [ __getBuyCount(x) for x in buyCount]
+        print realBuyCount
+        
+        buySeq = [getInt(proc, dataaddr + 0x8), getInt(proc, dataaddr + 0x28), getInt(proc, dataaddr + 0x48)]
+        #for seq in buySeq:
+        #    print "%x" % (seq)
+        print zip(buyCount, realBuyCount, buySeq)
+
+def sell(proc):
+    bossid = 0x18005d6
+    bossid = int(bossid)
+    __openDialog(proc, bossid, 0x4d)
+    
+    addr = getInt(proc, 0xBD805C)
+    count = getInt(proc, addr + 0x628)
+    print "sell good count = %d" % (count)
+    
+    base = getInt(proc, addr + 0x628 + 0xC)
+    base += 8
+    for i in range(count):
+        addr = getInt(proc, base)
+        print "addr = %x" % (addr)
+        infobase = addr + 0x8
+        seq = getInt(proc, infobase)
+        gid = getInt(proc, infobase + 0xC)
+        num = getShort(proc, infobase + 0xC + 0x8)
+        price = getInt(proc, infobase + 0xC + 0xC)
+        snum = getFloat(proc, infobase + 0xC + 0x14)
+        print "seq = %x, gid = %x, num = %d, price = %d, snum = %.3f" % (seq, gid, num, price, snum)
+        base += 0xC
+        
+        
+
+def __testGet(proc):
+    gid = 0x186c63
+    A = 0x04BECE60
+    B = 0x11
+    newaddr = A + (gid // 16 % B) * 4
+    print "%x" % (gid // 16)
+    print "newaddr = %x" % (newaddr)
+    addr = getInt(proc, newaddr)    
+    print "addr = %x" % (addr)
+    while(addr != 0):
+        fid = getInt(proc, addr)
+        print "fid = %x" % (fid)
+        if(fid == gid):
+            break;
+        addr = getInt(proc, addr + 0x08)
+        print "addr = %x" % (addr)
+    
+    addr = 0x039601C0
+    addr = getInt(proc, addr+0xC)
+    print "addr = %x" % (addr)
+    nameLength = getInt(proc, addr -12)
+    name = getStringW(proc, addr, nameLength)
+    print name
+        
+def __testTrade(proc):
+    
+    fl_trade = 25165958
+    
+    __openDialog(proc, fl_trade, 0x4E)
+    
+    return
+    
+    addr = 0x00BD805c
+    #print "%x" % (addr)
+    baseaddr = getInt(proc, addr)
+    lcount = getInt(proc, baseaddr + 0x5e8)
+    rcount = getInt(proc, baseaddr + 0x5fc)
+    print "left = %d, right = %d" % (lcount, rcount)
     
     
+    
+    addr = getInt(proc, baseaddr + 0x5e4)
+    
+    for count, off in [(lcount, 0x5e4), (rcount, 0x5f8)]:
+        addr = getInt(proc, baseaddr + off)
+        for i in range(count):
+            offset = i * 0x18
+            #print "%x" % (addr+offset)
+            
+            goodid = getInt(proc, addr + offset)
+            price = getShort(proc, addr + offset + 0x8)
+            trend = getShort(proc, addr + offset + 0x10)
+            percent = getShort(proc, addr + offset + 0x12)
+            print "goodid = %x, price = %d, trend = %x, percent = %d" % (goodid, price, trend, percent)
+        print
+    
+ 
     
