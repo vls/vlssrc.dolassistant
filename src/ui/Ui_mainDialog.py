@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'mainDialog.ui'
 #
-# Created: Wed Jan 27 15:00:05 2010
+# Created: Thu Feb 04 13:21:30 2010
 #      by: PyQt4 UI code generator 4.6.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -12,7 +12,7 @@ from PyQt4 import QtCore, QtGui
 class Ui_mainDialog(object):
     def setupUi(self, mainDialog):
         mainDialog.setObjectName("mainDialog")
-        mainDialog.resize(419, 450)
+        mainDialog.resize(421, 470)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -22,7 +22,7 @@ class Ui_mainDialog(object):
         mainDialog.setAutoFillBackground(False)
         self.tabWidget = QtGui.QTabWidget(mainDialog)
         self.tabWidget.setEnabled(True)
-        self.tabWidget.setGeometry(QtCore.QRect(10, 10, 401, 431))
+        self.tabWidget.setGeometry(QtCore.QRect(10, 10, 401, 451))
         self.tabWidget.setObjectName("tabWidget")
         self.tab = QtGui.QWidget()
         self.tab.setObjectName("tab")
@@ -44,7 +44,7 @@ class Ui_mainDialog(object):
         self.btnExec.setGeometry(QtCore.QRect(220, 360, 161, 41))
         self.btnExec.setObjectName("btnExec")
         self.btnSaveScript = QtGui.QPushButton(self.tab)
-        self.btnSaveScript.setGeometry(QtCore.QRect(110, 360, 80, 25))
+        self.btnSaveScript.setGeometry(QtCore.QRect(10, 360, 80, 25))
         self.btnSaveScript.setObjectName("btnSaveScript")
         self.btnRefresh = QtGui.QPushButton(self.tab)
         self.btnRefresh.setGeometry(QtCore.QRect(10, 180, 80, 25))
@@ -67,12 +67,15 @@ class Ui_mainDialog(object):
         item = QtGui.QTableWidgetItem()
         self.tblPlayer.setHorizontalHeaderItem(2, item)
         self.btnRefreshScript = QtGui.QPushButton(self.tab)
-        self.btnRefreshScript.setGeometry(QtCore.QRect(10, 360, 80, 25))
+        self.btnRefreshScript.setGeometry(QtCore.QRect(10, 390, 80, 25))
         self.btnRefreshScript.setObjectName("btnRefreshScript")
         self.btnMin = QtGui.QPushButton(self.tab)
         self.btnMin.setGeometry(QtCore.QRect(100, 180, 80, 25))
         self.btnMin.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
         self.btnMin.setObjectName("btnMin")
+        self.btnStop = QtGui.QPushButton(self.tab)
+        self.btnStop.setGeometry(QtCore.QRect(100, 360, 101, 41))
+        self.btnStop.setObjectName("btnStop")
         self.tabWidget.addTab(self.tab, "")
         self.tab_2 = QtGui.QWidget()
         self.tab_2.setObjectName("tab_2")
@@ -129,6 +132,7 @@ class Ui_mainDialog(object):
         QtCore.QObject.connect(self.btnRefreshScript, QtCore.SIGNAL("clicked()"), mainDialog.refreshScript)
         QtCore.QObject.connect(self.btnSaveScript, QtCore.SIGNAL("clicked()"), mainDialog.saveScript)
         QtCore.QObject.connect(self.btnMin, QtCore.SIGNAL("clicked()"), mainDialog.wiseMin)
+        QtCore.QObject.connect(self.btnStop, QtCore.SIGNAL("clicked()"), mainDialog.stopScript)
         QtCore.QMetaObject.connectSlotsByName(mainDialog)
 
     def retranslateUi(self, mainDialog):
@@ -145,6 +149,7 @@ class Ui_mainDialog(object):
         self.tblPlayer.horizontalHeaderItem(2).setText(QtGui.QApplication.translate("mainDialog", "id", None, QtGui.QApplication.UnicodeUTF8))
         self.btnRefreshScript.setText(QtGui.QApplication.translate("mainDialog", "刷新", None, QtGui.QApplication.UnicodeUTF8))
         self.btnMin.setText(QtGui.QApplication.translate("mainDialog", "智能最小化", None, QtGui.QApplication.UnicodeUTF8))
+        self.btnStop.setText(QtGui.QApplication.translate("mainDialog", "停止", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), QtGui.QApplication.translate("mainDialog", "脚本", None, QtGui.QApplication.UnicodeUTF8))
         self.btnAdd.setText(QtGui.QApplication.translate("mainDialog", "Add", None, QtGui.QApplication.UnicodeUTF8))
         self.btnDelete.setText(QtGui.QApplication.translate("mainDialog", "Delete", None, QtGui.QApplication.UnicodeUTF8))

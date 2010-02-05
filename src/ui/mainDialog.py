@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 sys.path.append("..")
-import _global
+from global_ import reloadMod
 from PyQt4.QtGui import QMainWindow
 from PyQt4.QtGui import QAbstractItemView
 from PyQt4.QtCore import Qt
@@ -50,6 +50,7 @@ class mainDialog(QMainWindow, Ui_mainDialog):
         self.stdout_ = sys.stdout
         #sys.stdout = self
         
+        self.flagRun = True
         
         self.loadItems()
         self.loadScripts()
@@ -106,7 +107,7 @@ class mainDialog(QMainWindow, Ui_mainDialog):
         return ipList
     
     def loadScripts(self):
-        scriptMod = self.__reloadMod('scripts')
+        scriptMod = reloadMod('scripts')
         scriptList = []
         row = 0
         #print self.tblScript.rowCount()
@@ -255,8 +256,11 @@ class mainDialog(QMainWindow, Ui_mainDialog):
         self.regKey()
         
     def invokeScript(self, funcName):
-        module = self.__reloadMod('scripts')
+        module = reloadMod('scripts')
         func = getattr(module, funcName)
+        self.flagRun = True
+        module.window = self
+        
         args, varargs, varkw, defaults = inspect.getargspec(func)        
         
         if(len(args) < 2):
@@ -378,6 +382,10 @@ class mainDialog(QMainWindow, Ui_mainDialog):
     def wiseMin(self):
         mainDialogBL.wiseMin(self.getPlayerHwndList())
             
+    def stopScript(self):
+        self.flagRun = False
+        self.pool.workRequests.clear()
+    
     
 #===============================================================================
 # Event

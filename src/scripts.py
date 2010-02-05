@@ -13,13 +13,15 @@ import ctypes
 from dol import dolBuildShipScript
 
 from dol.dolBuildShipData import *
+from dll import Mouse, Key
+
 
 ds = dolScript
 
 
 from dol.global_ import *
 
-
+window = None
 #===============================================================================
 # 前置脚本格式
 # 
@@ -43,6 +45,7 @@ def __dowhile(callable, args = [], interval = 0.2):
 
 def test(st,st2):
     print 'Test OK!!! String = %s / %s' % (st,st2)
+    print window
     return None
 
 def test2():
@@ -116,7 +119,8 @@ def toDock(hwnd, proc):
     '''
     进入码头
     '''
-    
+    print 'disabled'
+    return
     dolSafeCall.move(proc, dolCallEnum.MoveTo.Dock)
 
 def __enterCity_pre(window):
@@ -361,5 +365,115 @@ def __BuildShip(hwnd, proc, onSea = None):
     
     dolBuildShipScript.buildShip(hwnd, proc, city, shipid, woodid, storage, ticketnum, day, onSea)
 
-
+def __feather(hwnd, proc):
+    bossid = 0x1800349
+    logger = TextLogger('FeatherLog.txt')
+    myname = dolScript.getRoleName(proc)
+    print myname
+    def __alert():
+        logger.log( "断线了，退出脚本")
+        title = "警告"
+        message = "[%s] 断线 !!!".decode('utf-8')
+        message = message % (myname)
+        message = message.encode('utf-8')
+        beep(title, message)
+    class Switcher():
+        def __init__(self, switchList):
+            self.switchList = switchList
+            self.ptr = 0
+        
+        def getNext(self):
+            self.ptr += 1
+            if (self.ptr >= len(self.switchList)):
+                self.ptr = self.ptr % len(self.switchList)
+            return self.switchList[self.ptr]
+    
+    switch = Switcher([5, 6, 7, 8])
+        
+    while(True):
+        if(not dolScript.isOnline(proc)):
+            __alert()
+            return
+        while(dolCall.buy(proc, bossid, [-1, -1, (0xFFF, 68)])):
+            logger.log('bought some ducks...')
+            if(not dolScript.isOnline(proc)):
+                __alert()
+                return
+            
+            time.sleep(2)
+            logger.log('use 1*')
+            dolCall.custom(proc, 4) # f4放一星
+            time.sleep(1)
+        count = 0
+        while(dolScript.getHPRatio(proc) < 0.7):
+            if(not dolScript.isOnline(proc)):
+                __alert()
+                return
+            logger.log('eat')
+            dolCall.custom(proc, switch.getNext()) #f7 放料理
+            time.sleep(1)
+            count += 1
+            if(count > dolScript.getHPMax(proc) / 20):
+                logger.log('no food?')
+                beep('Epic fail', 'No food !!!')
+        
+        logger.log('start to make feather')    
+        dolCall.custom(proc, 3) #f3 放书
+        time.sleep(2)
+        Key("KeyClick", hwnd, 0x28) # down arrow
+        time.sleep(1)
+        Key("KeyClick", hwnd, 0xD) # enter
+        time.sleep(3)
+        
+        Mouse("LClick", hwnd, 627, 495)
+        time.sleep(1)
+        
+        hprecord = []
+        waitSec = 5
+        times = 6
+        interval = waitSec / float(times)
+        print interval
+        for i in range(times):
+            hprecord.append(-1)
+        
+        ptr = 0
+        while(True):
+            if(not dolScript.isOnline(proc)):
+                __alert()
+                return
+            hp = dolScript.getHP(proc)
+            if(hp < 100):
+                logger.log('hp low during making')
+                dolCall.custom(proc, 7)
+                for i in range(times):
+                    hprecord[i] = -1
+                time.sleep(1)
+            
+            hprecord[ptr] = hp
+            beforeptr = ptr
+            ptr += 1
+            ptr = ptr % times
+            print hprecord
+            if(hprecord[beforeptr] == hprecord[ptr]):
+                if(hprecord[beforeptr] < 10):
+                    logger.log('no food?')
+                    beep('Epic fail', 'No food !!!')
+                
+                logger.log('no materials')
+                time.sleep(2)
+                break    
+            time.sleep(interval)
+           
+        while(dolCall.sell(proc, bossid, [(0x186b2f, 30)])): #0x186b2f == 羽毛的id
+            if(not dolScript.isOnline(proc)):
+                __alert()
+                return
+            logger.log('selling feathers')
+            time.sleep(2)
+        time.sleep(2)
+    
+    
+    
+    
+    
     

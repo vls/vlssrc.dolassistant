@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>419</width>
-    <height>450</height>
+    <width>421</width>
+    <height>470</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -34,7 +34,7 @@
      <x>10</x>
      <y>10</y>
      <width>401</width>
-     <height>431</height>
+     <height>451</height>
     </rect>
    </property>
    <property name="currentIndex">
@@ -97,7 +97,7 @@
     <widget class="QPushButton" name="btnSaveScript">
      <property name="geometry">
       <rect>
-       <x>110</x>
+       <x>10</x>
        <y>360</y>
        <width>80</width>
        <height>25</height>
@@ -168,7 +168,7 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>360</y>
+       <y>390</y>
        <width>80</width>
        <height>25</height>
       </rect>
@@ -191,6 +191,19 @@
      </property>
      <property name="text">
       <string>智能最小化</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btnStop">
+     <property name="geometry">
+      <rect>
+       <x>100</x>
+       <y>360</y>
+       <width>101</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>停止</string>
      </property>
     </widget>
    </widget>
@@ -455,6 +468,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>btnStop</sender>
+   <signal>clicked()</signal>
+   <receiver>mainDialog</receiver>
+   <slot>stopScript()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>162</x>
+     <y>412</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>210</x>
+     <y>234</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>addItem()</slot>
@@ -465,5 +494,6 @@
   <slot>saveScript()</slot>
   <slot>refreshScript()</slot>
   <slot>wiseMin()</slot>
+  <slot>stopScript()</slot>
  </slots>
 </ui>

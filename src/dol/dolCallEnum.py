@@ -33,6 +33,9 @@ class SellInfo():
         self.num = 0
         self.price = 0
         self.cost = 0.0
+    
+    def __repr__(self):
+        return "(id = %x, num = %d, price = %d, cost = %d, profit = %d)\n" % (self.id, self.num, self.price, self.cost, self.price - self.cost)
         
 class BuyInfo():
     def __init__(self):
@@ -47,7 +50,10 @@ class ToBuy():
         self.slot = 0
         self.times = 0
         self.price = 0
+        
+    def getRealNum(self):
+        return buyCountDict[self.slot - 0xA300] * self.times
     
     def __repr__(self):
         realslot = self.slot - 0xA300 
-        return "(ID = %x, slot = %d(%d), times = %d, price = %d)" % (self.id, realslot, buyCountDict[realslot], self.times, self.price)
+        return "(ID = %x, slot = %d(%d), times = %d, price = %d)\n" % (self.id, realslot, buyCountDict[realslot],  self.times, self.price)

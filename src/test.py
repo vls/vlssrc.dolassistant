@@ -12,6 +12,7 @@ from helper import WindowHelper
 import win32con
 import win32gui
 import win32api
+import csv
 
 def dowhile(callback, condition ,  args = [], interval = 0.1):
     while(condition):
@@ -32,8 +33,8 @@ def main():
     
     mxy = dolScript.getMousePos(hwnd, 0, 0)
     #pyqmacro.invoke('BGKM5.dll','LClick',[hwnd, mxy[0], mxy[1]])
-    #ret = dll.Mouse("LClick", hwnd, 200, 200)
-    ret = dll.Key("KeyClick", hwnd, 0x1b)
+    ret = dll.Mouse("LClick", hwnd, 627, 495)
+    #ret = dll.Key("KeyClick", hwnd, 0xD)
 
     print win32gui.SetActiveWindow(hwnd)
     print win32api.GetLastError()
@@ -48,7 +49,11 @@ def main():
     time.sleep(0.01)
     #print windll.user32.PostMessageA(hwnd, win32con.WM_KEYUP, 13,0xC01C0001)
    
-
+def main2():
+    wri = csv.writer(open('test.csv', 'w'))
+    strList = [('123', 456, 'sss')]
+    
+    wri.writerows(strList)
 
 if __name__ == "__main__":
     main()

@@ -463,6 +463,7 @@ if __name__ == "__main__":
         print '队伍列表 = %s' % (getParty(pro))
         #print '快捷键 = %s' % (getQuickKey(pro))
         print '角度 = %s' % (getAngle(pro))
+        print 'TAB ID = %#x' % (getTabId(pro))
         print 'TAB对象 = %s<end>' % (getTabName(pro))
         print '陆地跟随 = %d' % (getLandFollow(pro))
         print '正常 = %s' % (isNormal(pro))
@@ -477,6 +478,7 @@ if __name__ == "__main__":
         print '帆位 = %d' % (getSailState(pro))
         print '潮流 = %d' % (getTide(pro))
         print '浪 = %d' % (getWave(pro))
+        print '坐标 = %d, %d' % (getLandPos(pro))
 #        while(True):
 #            print '海洋坐标: x=%.3f, y=%.3f' % getSeaPos(pro, (0x400, 0xbff))
 #            print '陆地坐标: x=%.3f, y=%.3f' % getLandPos(pro)

@@ -10,7 +10,7 @@ class MyList(list):
         return '[%s]' % (str[:-2])
 
 
-def __reloadMod(modstr):
+def reloadMod(modstr):
         if sys.modules.has_key(modstr):
             module = sys.modules[modstr]
             reload(module)

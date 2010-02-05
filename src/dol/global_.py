@@ -6,6 +6,7 @@ from ctypes import c_wchar_p, c_ulong, c_char_p, c_ubyte, c_uint, c_float, c_int
 import win32api, win32con
 import traceback
 import sys
+import os
 sys.path.append("..")
 
 
@@ -86,6 +87,21 @@ def getFloat(proc, addr):
 def log(msg):
     print "%s : %s " % (datetime.datetime.now(), msg)
     
+class TextLogger():
+    def __init__(self, filename):
+        self.filename = filename
+        self.writer = open(filename, 'a')
+        print self.writer
+         
+    def __del__(self):
+        self.writer.close()
+    
+    def log(self, msg):
+        msglog = "%s : %s " % (datetime.datetime.now(), msg)
+        print msglog
+        self.writer.write(msglog + os.linesep)
+        self.writer.flush()
+    
 def beep(title = "", message = ""):
     for i in range(3):
         win32api.MessageBeep(win32con.MB_ICONEXCLAMATION)
@@ -96,4 +112,9 @@ def beep(title = "", message = ""):
         traceback.print_exc(file=sys.stdout)
         win32api.MessageBox(None, "Something wrong !!! (Please check the encoding of the file who raise the *beep*)", "Warning", win32con.MB_ICONERROR | win32con.MB_TOPMOST)
         
-    
+def main():
+    logger = TextLogger('test.txt')
+    logger.log('123')
+
+if __name__ == "__main__":
+    main()   

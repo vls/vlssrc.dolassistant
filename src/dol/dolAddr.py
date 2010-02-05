@@ -36,7 +36,8 @@ class ADDR:
     
     HPMAX = HP + 4                      #最大行动力
     MONEY = HP + 8                      #金钱
-    #SAILOR = 0xB6FAFC									#当前水手
+    SAILOR = 0xB6FAFC									#当前水手
+    SAILOR_MAX = 0xB700BB
     FATIGUE = HP + 0x10                 #疲劳 > 300吃，（显示值的10倍）
     FOOD = HP + 0x12                    #食品
     WATER = HP + 0x14                   #水

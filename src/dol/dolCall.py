@@ -67,9 +67,9 @@ def writeCmd(proc, cmdList):
     '''
     注意：如果成功，需要使用者自行释放内存
     '''
-    size = CMDSIZE
+    size = len(cmdList)
     
-    assert len(cmdList) == size
+    #assert len(cmdList) == size
     cmd = (c_ubyte * size)()
     
     for i in range(size):
@@ -77,6 +77,7 @@ def writeCmd(proc, cmdList):
         
     buf = VirtualAllocEx(proc.handle, None, size, win32con.MEM_COMMIT, win32con.PAGE_READWRITE)
     if(buf == 0):
+        print "error = %d" % (win32api.GetLastError())
         raise MemException('VirtualAllocEx Fails')
     
     written = c_long(0) 
@@ -135,13 +136,17 @@ def execCmd(proc, cmdBuf, paraBuf):
     if(ret == 0):
         raise MemException("Close handle failed!")
     
-    ret = VirtualFreeEx(proc.handle, cmdBuf, 0, win32con.MEM_RELEASE)
-    if(ret == 0):
-        raise MemException("Release memory failed!")
+    #===========================================================================
+    # ret = VirtualFreeEx(proc.handle, cmdBuf, 0, win32con.MEM_RELEASE)
+    # if(ret == 0):
+    #    raise MemException("Release memory failed!")
+    #===========================================================================
     
-    ret = VirtualFreeEx(proc.handle, paraBuf, 0, win32con.MEM_RELEASE)
-    if(ret == 0):
-        raise MemException("Release memory failed!")
+    #===========================================================================
+    # ret = VirtualFreeEx(proc.handle, paraBuf, 0, win32con.MEM_RELEASE)
+    # if(ret == 0):
+    #    raise MemException("Release memory failed!")
+    #===========================================================================
     
     print "Cleaned"
     
@@ -161,7 +166,7 @@ def writeMem(proc, addr, writeBuf):
         raise MemException('WriteProcessMemory() fails!')
 
 
-def __openDialog(proc, bossid, dialogID):
+def openDialog(proc, bossid, dialogID, wait = True):
     '''
     开启游戏的对话框
     '''
@@ -176,7 +181,8 @@ def __openDialog(proc, bossid, dialogID):
     
     dowhile(isNormal, [proc])
     execCmd(proc, cmdBuf, paraBuf)
-    time.sleep(changeDelay)
+    if(wait):
+        time.sleep(changeDelay)
     
 def __translate(proc):
     byteList = [0x61,0x84,0x04,0x84,0x52,0x91]
@@ -198,6 +204,8 @@ def __translate(proc):
 def __gettab(proc):
     print "0x%x" % (dolScript.getTabId(proc))
 
+
+
 def __getstr(proc, addr):
     addr = int(addr)
     string =  getStringW(proc, addr, 0x18)
@@ -215,7 +223,22 @@ def walk(proc, x, y):
     nowx, nowy = dolScript.getLandPos(proc)
     
     while(nowx != x and nowy != y):
-        cmdBuf = writeCmd(proc, area.walkCmd)
+        cmd = None
+        times = 14
+        end = len(area.walkCmd) - 1
+        count = 0
+        for i in range(end, 0, -1):
+            if(area.walkCmd[i] == 0xC3):
+                if(count < times):
+                    count += 1
+                    continue
+                print i
+                #print area.walkCmd[:i+1]
+                cmd = area.walkCmd[:i+1]
+                break
+            
+        print "len = %d" % (len(cmd))
+        cmdBuf = writeCmd(proc, cmd)
         
         cpara = (c_ubyte * PARASIZE)()
     
@@ -235,7 +258,7 @@ def walk(proc, x, y):
             
             
         paraBuf = writePara(proc, cpara)
-        dowhile(isNormal, [proc])
+        #dowhile(isNormal, [proc])
         execCmd(proc, cmdBuf, paraBuf)
         
         time.sleep(0.2)
@@ -301,7 +324,9 @@ def move(proc, moveto):
     '''
     从码头进入城市，或者从城市进入码头
     '''
-    
+    if(moveto == dolCallEnum.MoveTo.Dock):
+        print 'disabled for some reasons'
+        return
     
     userid = dolScript.getPCID(proc)
     moveto = int(moveto)
@@ -528,7 +553,7 @@ def sellShip(proc, bossid):
     if(not __isOpened(proc)):
         
         
-        __openDialog(proc, bossid, 0x53)
+        openDialog(proc, bossid, 0x53)
     
         while(True):
             if(__isOpened(proc)):
@@ -643,7 +668,7 @@ def eat(proc, bossid, water, food):
     food = int(food)
 
     
-    __openDialog(proc, bossid, 0x70)
+    openDialog(proc, bossid, 0x70)
     
     
     seq, foodList = __getFoodMenu(proc)
@@ -731,12 +756,16 @@ def __split(info, tobuyNum):
 
 def __testbuy(proc):
     xd_trade = 25166277
-    bossid = xd_trade
+    bossid = 0x1800349
     print "bossid = %x" % (bossid)
-    buy(proc, bossid, [0xFFF, -1, 0xFFF, -1, 0xFFF, -1, -1])
+    buy(proc, bossid, [-1, -1, (0xFFF, 68)])
 
 def buy(proc, bossid, buyList):
-    
+    '''
+    购买
+    buyList = []
+    值的类型有：-1 = 不买, 0 = 最小量, 数字 = 买多少, 0xFFF = 全买
+    '''
     #===========================================================================
     # seqAddr = 0xafd398
     # print "%x" % (getByte(proc, seqAddr))
@@ -745,7 +774,7 @@ def buy(proc, bossid, buyList):
     #bossid = 0x18005d6
     bossid = int(bossid)
     
-    __openDialog(proc, bossid, 0x4C)
+    openDialog(proc, bossid, 0x4C)
     
     addr = getInt(proc, CALLADDR.DIALOG)
     while(addr == 0):
@@ -771,9 +800,9 @@ def buy(proc, bossid, buyList):
     load = getShort(proc, loadAddr)
     maxLoad = getShort(proc, maxLoadAddr)
     
-    if(load == maxLoad):
+    if(load >= maxLoad):
         print "the ship is full!"
-        return
+        return False
     
     addr = getInt(proc, goodaddr + 0x40)
     while(addr != 0):
@@ -818,11 +847,19 @@ def buy(proc, bossid, buyList):
         goodList[i].info = info
 
     tobuyList = MyList()
-
+    
+    minBuyDict = {}
+    
     for i in range(count):
         remain = goodList[i].remain
         if(remain == 0):
             continue
+        
+        minBuy = None
+        if(isinstance(buyList[i], tuple)):
+            buyType, minBuy = buyList[i]
+            buyList[i] = buyType
+            minBuyDict[goodList[i].id] = minBuy
         
         buyNum = -1
         if(buyList[i] == -1):
@@ -840,6 +877,9 @@ def buy(proc, bossid, buyList):
         elif(buyList[i] >= 999):
             #print "in maxbuy : remain = %d" % (remain)
             planList = __split(goodList[i].info, remain)
+            
+            if(minBuy != None and remain < minBuy):
+                continue
             #print planList
             #print 
             for slot, times, price in planList:
@@ -856,6 +896,9 @@ def buy(proc, bossid, buyList):
             else:
                 buyNum = remain
             
+            if(minBuy != None and buyNum < minBuy):
+                continue
+            
             planList = __split(goodList[i].info, buyNum)
             for slot, times, price in planList:
                 tobuy = ToBuy()
@@ -869,27 +912,43 @@ def buy(proc, bossid, buyList):
     load = getShort(proc, loadAddr)
     maxLoad = getShort(proc, maxLoadAddr)
     
-    
+    temptobuyList = MyList()
     realtobuyList = MyList()
     token = 0
     for tobuy in tobuyList:
-        space = buyCountDict[tobuy.slot - 0xA300] * tobuy.times
+        space = tobuy.getRealNum()
         
         if(load + token + space <= maxLoad):
             print "space = %d, token = %d, load= %d, max = %d" % (space, token, load, maxLoad)
-            realtobuyList.append(tobuy)
+            temptobuyList.append(tobuy)
             token += space
     print 
-    print realtobuyList
-      
+    print temptobuyList
+    
+    tobuyDict = {}
+    for tobuy in temptobuyList:
+        if(tobuyDict.has_key(tobuy.id)):
+            tobuyDict[tobuy.id] += tobuy.getRealNum()
+        else:
+            tobuyDict[tobuy.id] = tobuy.getRealNum()
+            
+    for tobuy in temptobuyList:
+        if(minBuyDict.has_key(tobuy.id) and minBuyDict[tobuy.id] > tobuyDict[tobuy.id] ):
+            continue
+        else:
+            realtobuyList.append(tobuy)
+    print 
+    print realtobuyList        
     
     addr = CALLADDR.TRADE_DETAIL_PARA
     
     #realtobuyList = realtobuyList[:-1]
     if(len(realtobuyList) == 0):
         print "Nothing to buy"
-        return
-    #return
+        return False
+    
+    
+    
     for tobuy in realtobuyList:
         
         writeMem(proc, addr, c_uint(tobuy.id))
@@ -921,16 +980,22 @@ def buy(proc, bossid, buyList):
     
     dowhile(isNormal, [proc])
     execCmd(proc, cmdBuf, paraBuf)
+    return True
 
 def __testDialog(proc):
     xd_trade = 25166277
     bossid = xd_trade
     sell(proc, bossid)
 
-def sell(proc, bossid):
+def sell(proc, bossid, sellList = None):
+    '''
+    出售
+    sellList = []
+    []元素为tuple(good id, count)
+    '''
     
     bossid = int(bossid)
-    __openDialog(proc, bossid, 0x4d)
+    openDialog(proc, bossid, 0x4d)
     
     addr = getInt(proc, CALLADDR.DIALOG)
     
@@ -941,15 +1006,15 @@ def sell(proc, bossid):
     
     count = getInt(proc, addr + 0x628)
     print "sell good count = %d" % (count)
-    return
+    
     base = getInt(proc, addr + 0x628 + 0xC)
     base += 8
     
-    infoList = []
+    infoList = MyList()
     
     for i in range(count):
         addr = getInt(proc, base)
-        print "addr = %x" % (addr)
+        #print "addr = %x" % (addr)
         infobase = addr + 0x8
         seq = getInt(proc, infobase)
         gid = getInt(proc, infobase + 0xC)
@@ -966,10 +1031,37 @@ def sell(proc, bossid):
         info.price = price
         info.cost = cost
         infoList.append(info)
+    
+    tosellList = MyList()
+    infoDict = {}
+    for info in infoList:
+        infoDict[info.id] = info
+    
+    if(sellList != None):
+        for gid, count in sellList:
+            if(not infoDict.has_key(gid)):
+                continue
+            
+            info = infoDict[gid]
+            if(info.num < count):
+                continue
+            else:
+                info.num = count
+            
+            tosellList.append(info)
+    else:
+        tosellList = infoList
+    print tosellList
+    
+    if(len(tosellList) == 0):
+        print 'Nothing to sell'
+        return False
         
+    
+      
     addr = CALLADDR.TRADE_DETAIL_PARA
-    for i in range(count):
-        info = infoList[i]
+    for i in range(len(tosellList)):
+        info = tosellList[i]
         writeMem(proc, addr, c_int(info.seq))
         writeMem(proc, addr + 4, c_int(0))
         writeMem(proc, addr + 8, c_int(0))
@@ -980,7 +1072,7 @@ def sell(proc, bossid):
     addr = CALLADDR.TRADE_HEAD_PARA
     writeMem(proc, addr, c_uint(0x9F489C))
     writeMem(proc, addr + 4, c_uint(0xAFD3A8))
-    writeMem(proc, addr + 8, c_uint(count))
+    writeMem(proc, addr + 8, c_uint(len(tosellList)))
     
     cpara = (c_ubyte * PARASIZE)()
     ip = cast(cpara, POINTER(c_uint))
@@ -996,12 +1088,17 @@ def sell(proc, bossid):
     
     dowhile(isNormal, [proc])
     execCmd(proc, cmdBuf, paraBuf)
-    
+    return True
+
+
+def __testSell(proc):
+    bossid = 25166665
+    sell(proc, bossid, [(0x186b2f, 30)])    
         
 def getTradeInfo(proc, bossid):
     
     bossid = int(bossid)
-    __openDialog(proc, bossid, 0x4E)
+    openDialog(proc, bossid, 0x4E)
     
     addr = getInt(proc, CALLADDR.DIALOG)
     while(addr == 0):

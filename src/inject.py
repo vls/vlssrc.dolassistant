@@ -14,7 +14,7 @@ import win32event
 import getopt
 from dol import dolCall, dolScript, dolFirmScript
 import dol
-from global_ import __reloadMod
+from global_ import reloadMod
 
 
 
@@ -161,7 +161,7 @@ def __getMod(modFullName):
     if(len(names) == 0):
         return None
     
-    mod = __reloadMod(names[0])
+    mod = reloadMod(names[0])
     #print mod
     for i in range(1, len(names)):
         #print names[i]
@@ -243,14 +243,14 @@ def main(argv=sys.argv):
                         mod = __getMod(name)
                         #print mod
                         func = getattr(mod, funcName)
-                        
-                        print "In module : %s" % (mod)
-                        func(hProc, *args)
-                        flagRun = True
-                        break
                     except AttributeError as e:
                         #print e
-                        pass
+                        continue    
+                        
+                    func(hProc, *args)
+                    flagRun = True
+                    break
+                    
                 
                 if(not flagRun):
                     print "no module has func named %s" % (funcName)           
