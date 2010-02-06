@@ -3,7 +3,7 @@
 FIRM_NAME_ADDR = 0xb7139c
 FIRM_BASE_ADDR = 0xbe4738 # 跟CALLADDR.DIALOG一样的值
 
-GOOD_NAME_ADDR = 0xb7051c
+GOOD_NAME_ADDR = 0xb7051c - 0x70d0 #台服2010/02/03的地址 = 国服2010/02/02地址 + 0x70d0
 
 from global_ import *
 from dll import Mouse, Key
@@ -218,8 +218,39 @@ class FirmHelper:
         if(self.nameDict.has_key(gid)):
             return self.nameDict[gid]
         
-        A = getInt(self.proc, GOOD_NAME_ADDR + 4)
-        B = getInt(self.proc, GOOD_NAME_ADDR + 8)
+        if (gid >= 0x249f00):
+            numAddr = 0xb6928c
+        elif (gid >= 0x231860):
+            numAddr = 0xb69468
+        elif (gid >= 0x2191c0):
+            numAddr = 0xb6928c
+        elif (gid >= 0x200b20):
+            numAddr = 0xb69724
+        elif (gid >= 0x1cfde0):
+            numAddr = 0xb694a0
+        elif (gid >= 0x1b7740):
+            numAddr = 0xb6928c
+        elif (gid >= 0x180000):
+            numAddr = GOOD_NAME_ADDR
+        elif (gid >= 0x16e360):
+            numAddr = 0xb69724
+        elif (gid >= 0x10c8e0):
+            numAddr = 0xb69318
+        elif (gid >= 0xf4240):
+            numAddr = 0xb69350
+        elif (gid >= 0xaae60):
+            numAddr = 0xb69724
+        elif (gid >= 0x927c0):
+            numAddr = 0xb692fc
+        elif (gid < 200):
+            numAddr = 0xb69414
+        else:
+            numAddr = 0xb69270
+        
+        numAddr += 0x70d0
+        A = getInt(self.proc, numAddr + 4)
+        B = getInt(self.proc, numAddr + 8)
+        print A, B, gid
         groupid = gid // 16
         newaddr = A + (groupid % B) * 4
         
