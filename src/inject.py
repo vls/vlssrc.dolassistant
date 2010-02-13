@@ -12,7 +12,7 @@ import pywintypes
 import random
 import win32event
 import getopt
-from dol import dolCall, dolScript, dolFirmScript
+from dol import dolCall, dolScript, dolFirmScript, dolLib, readMap
 import dol
 from global_ import reloadMod
 
@@ -43,7 +43,7 @@ def raiseP():
     #query()
     priv_flags = win32security.TOKEN_ADJUST_PRIVILEGES | win32security.TOKEN_QUERY
     hToken = win32security.OpenProcessToken (
-      win32api.GetCurrentProcess (), 
+      win32api.GetCurrentProcess(), 
       priv_flags
     )
     privilege_id = win32security.LookupPrivilegeValue (
@@ -95,7 +95,7 @@ def getProcByName(procName):
                 if( procName.lower() == processName.lower()):
                     return hProcess
             win32api.CloseHandle(hProcess)
-        except pywintypes.error as e:
+        except pywintypes.error, e:
             #print "fail to open process pid = %d" % (pid)
 
             #print e
@@ -196,7 +196,13 @@ def main(argv=sys.argv):
         
     if(optdict.has_key('-p')):
         try:
-            value = int(optdict['-p'])
+            strvalue = optdict['-p']
+            value = None
+            if(strvalue[-1:].lower() == 'h'):
+                value = int(strvalue[:-1], 16)
+            else:
+                value = int(optdict['-p'])
+
             try:
                 hProc = win32api.OpenProcess(win32con.PROCESS_ALL_ACCESS, 0, value)
             except pywintypes.error:
@@ -217,7 +223,7 @@ def main(argv=sys.argv):
         elif(optdict.has_key('-f')):
             funcName = optdict['-f']
             
-            modList = ['dol.dolCall', 'dol.dolScript', 'dol.dolFirmScript']
+            modList = ['dol.readMap', 'dol.dolLib', 'dol.dolCall', 'dol.dolScript', 'dol.dolFirmScript']
             
             
             
@@ -235,7 +241,7 @@ def main(argv=sys.argv):
                 print args
                 func(*args)
                 
-            except AttributeError as e:
+            except AttributeError, e:
                 #print e
                 flagRun = False
                 for name in modList:
@@ -243,10 +249,10 @@ def main(argv=sys.argv):
                         mod = __getMod(name)
                         #print mod
                         func = getattr(mod, funcName)
-                    except AttributeError as e:
-                        #print e
+                    except AttributeError, e:
+                        print e
                         continue    
-                        
+                    print name    
                     func(hProc, *args)
                     flagRun = True
                     break

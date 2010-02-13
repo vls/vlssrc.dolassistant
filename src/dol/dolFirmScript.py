@@ -1,17 +1,19 @@
 # -*- coding: utf-8 -*-
-
+from __future__ import with_statement
 FIRM_NAME_ADDR = 0xb7139c
 FIRM_BASE_ADDR = 0xbe4738 # 跟CALLADDR.DIALOG一样的值
 
 GOOD_NAME_ADDR = 0xb7051c - 0x70d0 #台服2010/02/03的地址 = 国服2010/02/02地址 + 0x70d0
+
 
 from global_ import *
 from dll import Mouse, Key
 from helper import ProcessHelper
 import dolCallAddr, dolAddr
 import dolCall, dolScript
-from global_ import dowhile
+from global_ import dountil
 import csv
+from heapq import heappush, heappop
 ADDR = dolAddr.ADDR
 
 CALLADDR = dolCallAddr.TW
@@ -25,30 +27,60 @@ class GoodInfo:
         self.firmSeq = 0
         self.firmName = ""
 
-def __test(proc):
-        addr =  getInt(proc, FIRM_BASE_ADDR)
-        print "%x" % (addr)
-        print "%x" % (getInt(proc, FIRM_BASE_ADDR + 4) )
-        print "%x" % (getInt(proc, CALLADDR.DIALOG))
-        print "%x" % (getInt(proc, CALLADDR.DIALOG + 4))
 
-def __testOpen(proc, dia):
-    dia = int(dia)
+
+def __getSmall(proc):
+    addr = 0xb7051c
+    small = []
+    A = getInt(proc, addr + 4)
+    B = getInt(proc, addr + 8)
+    for i in range(B):
+        addr = A + i * 4
+        addr = getInt(proc, addr)
+        gid = getInt(proc, addr)
+        while(gid != 0):
+            gid = getInt(proc, addr)
+            
+            print "%x" % (gid)
+            if( gid != 0):  
+                heappush(small, gid)
+            addr = getInt(proc, addr + 8)
+    print "%x" % (heappop(small))       
+
+def __testOp(proc):
+    bossid = dolScript.getTabId(proc)
+    bossid = dolScript.getPCID(proc)
+    dia = 0x20
+    if(bossid != 0):
+    
+        dolCall.openDialog(proc, bossid, dia, False)
+    else:
+        print 'no tab'
+def __testOpen(proc):
     
     
     bossid = dolScript.getTabId(proc)
+    
     if(bossid != 0):
+        
         print dolScript.getTabName(proc)
         
-        dolCall.openDialog(proc, bossid, dia, False)
-        time.sleep(2)
-        addr = getInt(proc, CALLADDR.DIALOG)
+        for dia in range(0x20 + 1, 0xFF):
+            print "%x" % (dia)
+            dolCall.openDialog(proc, bossid, dia, False)
+            time.sleep(2)
+            addr = getInt(proc, CALLADDR.DIALOG)
+            if (addr != 0):
+                print "%x" % (dia)
+                break
         
     else:
         print 'no tab'
+
+
         
-def __testsearch(proc):
-    helper = FirmHelper(proc)
+def __testsearch(proc, filepath = None):
+    helper = FirmHelper(proc, filepath)
     helper.searchGoods()
 
 def waitLoad(proc):
@@ -62,78 +94,6 @@ def waitLoad(proc):
     return True
 
 
-def __getname(proc):
-    '''
-        获取物品名称
-    '''
-    gid = 0x16f6eb
-    addr = 0xB70680
-    
-    #gid = 0x186aea
-    #addr = GOOD_NAME_ADDR + 4
-    
-    A = getInt(proc, addr)
-    B = getInt(proc, addr + 4)
-    groupid = gid // 16
-    print "%x" % (groupid)
-    print "A = %x" % (A)
-    print "%%b = %x" % (groupid % B)
-    print "* 4 = %x " % (groupid % B *4) 
-    
-    newaddr = A + (groupid % B) * 4
-    
-    print "newaddr = %x" % (newaddr)
-    
-    addr = getInt(proc, newaddr)
-    print "addr = %x" % (addr)
-    
-    
-    while(addr != 0):
-        tempgroupid = getInt(proc, addr + 12)
-        print "tempgroupid = %x" % (tempgroupid)
-        tempgid = getInt(proc, addr)
-        print "tempgid = %x" % (tempgid)
-        if(tempgroupid == groupid and tempgid == gid):
-            break
-        
-        addr = getInt(proc, addr + 8)
-        print "addr = %x" % (addr)
-        
-    
-    if(addr != 0):
-        addr = getInt(proc, addr + 4)
-        addr = getInt(proc, addr + 12)
-        name = getStringW(proc, addr, 40)
-        
-
-        print name
-        return name
-    
-    return None
-
-def __name2(proc):
-    addr = 0x4D8338C
-    temp = addr
-    id = getInt(proc, addr)
-    addr = getInt(proc, addr + 4)
-    addr = getInt(proc, addr + 12)
-    name = getStringW(proc, addr, 40)
-    
-    if (len(name) != 0 and len(name) != 40):
-        
-        print "[%x] %#x = %s" % (temp, id, name)
-
-def __name(proc):
-    for addr in range(0x4EEAFFC-0x3FF0, 0x4EEAFFC+ 0x5FFF0, 0x10):
-        temp = addr
-        id = getInt(proc, addr)
-        addr = getInt(proc, addr + 4)
-        addr = getInt(proc, addr + 12)
-        name = getStringW(proc, addr, 40)
-        
-        if (len(name) != 0 and len(name) != 40):
-            print "[%x] %#x = %s" % (temp, id, name)
-            
 
 class abstractwriter():
     def __init__(self):
@@ -157,7 +117,7 @@ class csvWriter(abstractwriter):
         msgList = []
         for m in msg:
             if(isinstance(m, unicode)):
-                msgList.append(m.encode('gbk'))
+                msgList.append(m.encode('utf-8'))
             else:
                 msgList.append(m)
         self.writer.writerows([msgList])
@@ -168,13 +128,14 @@ FILEPATH = 'firmgoods.csv'
         
 class FirmHelper:
     
-    def __init__(self, proc):
+    def __init__(self, proc, filepath = None):
         self.nameDict = {}
         self.currentFirmSeq = -1
         self.proc = proc
         self.firmNameList = self.getFirmNameList()
-        
-        self.writer = csvWriter(FILEPATH) 
+        if(filepath == None):
+            filepath = FILEPATH
+        self.writer = csvWriter(filepath) 
 
     def getFirmNameList(self):
         '''
@@ -230,7 +191,7 @@ class FirmHelper:
             numAddr = 0xb694a0
         elif (gid >= 0x1b7740):
             numAddr = 0xb6928c
-        elif (gid >= 0x180000):
+        elif (gid >= 0x186b9f):
             numAddr = GOOD_NAME_ADDR
         elif (gid >= 0x16e360):
             numAddr = 0xb69724
@@ -250,7 +211,7 @@ class FirmHelper:
         numAddr += 0x70d0
         A = getInt(self.proc, numAddr + 4)
         B = getInt(self.proc, numAddr + 8)
-        print A, B, gid
+        #print A, B, gid
         groupid = gid // 16
         newaddr = A + (groupid % B) * 4
         
@@ -299,7 +260,11 @@ class FirmHelper:
             
             price = getInt(self.proc, addr + 12 + 12)
             count = getInt(self.proc, addr + 12 + 12 + 0x10)
-            print "good id = %x, name = %s, price = %d, count = %d" % (gid, name, price, count)
+            #print "good id = %x" % (gid)
+            try:
+                print "good id = %x, name = %s, price = %d, count = %d" % (gid, name, price, count)
+            except UnicodeEncodeError:
+                pass
             
             info = GoodInfo()
             info.id = gid
@@ -334,7 +299,7 @@ class FirmHelper:
         if(addr == 0):
             dolCall.openDialog(self.proc, bossid, 0x7b)
             
-            dowhile(waitLoad, [self.proc])
+            dountil(waitLoad, [self.proc])
             addr = getInt(self.proc, FIRM_BASE_ADDR)
             
         print "%x" % (addr)
@@ -347,7 +312,7 @@ class FirmHelper:
                 self.writer.write('ID', 'name', 'price', 'count', 'firm', 'firmseq')
                 while(nowrank == rank and nowrank < 250):
                     
-                    print "-----------search [%s]-------------" % (nameList[rank])
+                    print "-----------search [%s]------------- (%d/%d)" % (nameList[rank], nowrank, len(nameList))
                     self.currentFirmSeq = nowrank
                     
                     
@@ -384,7 +349,8 @@ class FirmHelper:
                     time.sleep(0.5)
                     
                     while(getByte(self.proc, addr + 0x6ac) != rank + 1):
-                        
+                        if(getByte(self.proc, addr + 0x6ac) == 0):
+                            return
                         time.sleep(0.5)
                     
                     rank = getByte(self.proc, addr + 0x5e4)     
@@ -399,6 +365,5 @@ class FirmHelper:
 def main():
     print 'main'
 
-if __name__ == "__main__" and __package__ == None:
-    print __package__
+if __name__ == "__main__":
     main()

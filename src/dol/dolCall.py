@@ -12,6 +12,11 @@ import dolCallCmd
 import dolCallAddr
 from global_ import *
 
+import sys
+sys.path.append('..')
+from dll import Key, Mouse
+import helper
+
 from dolCallEnum import SellInfo, BuyInfo, ToBuy, buyCountDict
 
 
@@ -29,8 +34,6 @@ class MemException(Exception):
 
 
 
-def Clean(proc):
-    win32api.CloseHandle(proc)
 
 
 def isSceneChange(proc):
@@ -57,19 +60,19 @@ def isNormal(proc):
     == 在线 && !鼠标忙 && !切换场景
     '''
     flag = isOnline(proc)
-    print isBusy(proc)
+    #print isBusy(proc)
     flag2 = not isBusy(proc)
     flag3 = not isSceneChange(proc)
-    print "isNormal %s %s %s" % (flag, flag2, flag3)
+    #print "isNormal %s %s %s" % (flag, flag2, flag3)
     return flag and flag2 and flag3
 
 def writeCmd(proc, cmdList):
     '''
     注意：如果成功，需要使用者自行释放内存
     '''
-    size = len(cmdList)
+    size = CMDSIZE
     
-    #assert len(cmdList) == size
+    assert len(cmdList) == size
     cmd = (c_ubyte * size)()
     
     for i in range(size):
@@ -77,6 +80,7 @@ def writeCmd(proc, cmdList):
         
     buf = VirtualAllocEx(proc.handle, None, size, win32con.MEM_COMMIT, win32con.PAGE_READWRITE)
     if(buf == 0):
+        print proc
         print "error = %d" % (win32api.GetLastError())
         raise MemException('VirtualAllocEx Fails')
     
@@ -124,7 +128,11 @@ def writePara(proc, cPara):
     
     return buf
 
-def execCmd(proc, cmdBuf, paraBuf):
+def execCmd(proc, cmdBuf, paraBuf, clean = True):
+    if(not isinstance(clean, bool)):
+        print 'invalid parameter'
+        return
+    #print "cmd, para = %d, %d" % (cmdBuf, paraBuf)
     tHandle, tid = win32process.CreateRemoteThread(proc.handle, None, 0, cmdBuf, paraBuf, 0)
     print "Success! ThreadHandle, ThreadID = %d,%d" %( tHandle, tid)
     
@@ -135,20 +143,16 @@ def execCmd(proc, cmdBuf, paraBuf):
     ret = win32api.CloseHandle(tHandle)
     if(ret == 0):
         raise MemException("Close handle failed!")
-    
-    #===========================================================================
-    # ret = VirtualFreeEx(proc.handle, cmdBuf, 0, win32con.MEM_RELEASE)
-    # if(ret == 0):
-    #    raise MemException("Release memory failed!")
-    #===========================================================================
-    
-    #===========================================================================
-    # ret = VirtualFreeEx(proc.handle, paraBuf, 0, win32con.MEM_RELEASE)
-    # if(ret == 0):
-    #    raise MemException("Release memory failed!")
-    #===========================================================================
-    
-    print "Cleaned"
+    if(clean):
+        ret = VirtualFreeEx(proc.handle, cmdBuf, 0, win32con.MEM_RELEASE)
+        if(ret == 0):
+            raise MemException("Release memory failed!")
+        
+        ret = VirtualFreeEx(proc.handle, paraBuf, 0, win32con.MEM_RELEASE)
+        if(ret == 0):
+            raise MemException("Release memory failed!")
+        
+        print "Cleaned"
     
 def writeMem(proc, addr, writeBuf):
     
@@ -179,13 +183,23 @@ def openDialog(proc, bossid, dialogID, wait = True):
     paraBuf = writePara(proc, cpara)
     cmdBuf = writeCmd(proc, area.openDialogCmd)
     
-    dowhile(isNormal, [proc])
+    dountil(isNormal, [proc])
     execCmd(proc, cmdBuf, paraBuf)
     if(wait):
         time.sleep(changeDelay)
+
+def __temp(proc):
+    s = '591EB5A9C3A75C698470A621BEC5CE1F41EDC6CA60B1E5711A8CE788039FECF713280542C51E39F1455CC79067B9AED8FFD5'
+    byteList = []
+    for i in range(0, len(s), 2):
+        byteList.append(int(s[i:i+2],16))
+        
+    print byteList
     
-def __translate(proc):
-    byteList = [0x61,0x84,0x04,0x84,0x52,0x91]
+    __translate(proc, byteList)
+    
+def __translate(proc, byteList = None):
+    #byteList = [0x61,0x84,0x04,0x84,0x52,0x91]
     #byteList = [0x1F,0x67,0x85,0x5F,0xC2,0x53,0x18,0x62,0x84,0x76,0x04,0x54,0x4D,0x4F,0xAA,0x52,0x9B,0x52,0x4B,0x59,0x97,0x65,0x02,0x30]
     byteList.append(0)
     length = len(byteList)
@@ -216,54 +230,55 @@ def __getstr(proc, addr):
 # Specific functions    
 #===============================================================================
 
-def walk(proc, x, y):
+def walk(proc, x, y, diff = 500):
+    print 'walk'
     x = float(x)
     y = float(y)
     
+    def distance(x1, y1, x, y):
+        return ((x1 - x) ** 2 + (y1 - y) ** 2) ** 0.5
+    
     nowx, nowy = dolScript.getLandPos(proc)
     
-    while(nowx != x and nowy != y):
-        cmd = None
-        times = 14
-        end = len(area.walkCmd) - 1
-        count = 0
-        for i in range(end, 0, -1):
-            if(area.walkCmd[i] == 0xC3):
-                if(count < times):
-                    count += 1
-                    continue
-                print i
-                #print area.walkCmd[:i+1]
-                cmd = area.walkCmd[:i+1]
-                break
-            
-        print "len = %d" % (len(cmd))
-        cmdBuf = writeCmd(proc, cmd)
-        
-        cpara = (c_ubyte * PARASIZE)()
+    if(distance(x, y, nowx, nowy) <= diff):
+        print 'close enough. No Walk'
+        return
     
-        fpara = cast(cpara, POINTER(c_float))
-        #print "x=%f, y=%f" % (x,y)
-        fpara[0] = x
-        fpara[1] = y
+    flagRun = False
+    cmdBuf = writeCmd(proc, area.walkCmd)
         
-        ipara = cast(cpara, POINTER(c_int))
-        for i in range(4):
-            ipara[i+2] = getInt(proc, area.walkSeqAddrList[i])
-            
-        #=======================================================================
-        # for i in range(24):
-        #    print "para = %x" % (cpara[i])
-        #=======================================================================
-            
-            
-        paraBuf = writePara(proc, cpara)
-        #dowhile(isNormal, [proc])
-        execCmd(proc, cmdBuf, paraBuf)
+    cpara = (c_ubyte * PARASIZE)()
+
+    fpara = cast(cpara, POINTER(c_float))
+    #print "x=%f, y=%f" % (x,y)
+    fpara[0] = x
+    fpara[1] = y
+    
+    ipara = cast(cpara, POINTER(c_int))
+    for i in range(4):
+        ipara[i+2] = getInt(proc, area.walkSeqAddrList[i])
+        
+    #=======================================================================
+    # for i in range(24):
+    #    print "para = %x" % (cpara[i])
+    #=======================================================================
+        
+        
+    paraBuf = writePara(proc, cpara)
+    
+    
+    while(distance(x, y, nowx, nowy) > diff):
+        
+        flagRun = True
+        
+        #dountil(isNormal, [proc])
+        execCmd(proc, cmdBuf, paraBuf, False)
         
         time.sleep(0.2)
         nowx, nowy = dolScript.getLandPos(proc)
-        
+        print 'pos diff = %.3f' % (distance(x, y, nowx, nowy))
+    if(flagRun):
+        execCmd(proc, cmdBuf, paraBuf)
 
     
 def follow(proc, userid):
@@ -298,7 +313,7 @@ def follow(proc, userid):
     #===========================================================================
         
     paraBuf = writePara(proc, cpara)
-    dowhile(isNormal, [proc])
+    dountil(isNormal, [proc])
     execCmd(proc, cmdBuf, paraBuf)
     
 def seafollow(proc, userid):
@@ -317,16 +332,19 @@ def seafollow(proc, userid):
     ip[0] = userid
     
     paraBuf = writePara(proc, cpara)
-    dowhile(isNormal, [proc])
+    dountil(isNormal, [proc])
     execCmd(proc, cmdBuf, paraBuf)
     
 def move(proc, moveto):
     '''
     从码头进入城市，或者从城市进入码头
     '''
-    if(moveto == dolCallEnum.MoveTo.Dock):
-        print 'disabled for some reasons'
-        return
+    print 'move'
+    #===========================================================================
+    # if(moveto == dolCallEnum.MoveTo.Dock):
+    #    print 'disabled for some reasons'
+    #    return
+    #===========================================================================
     
     userid = dolScript.getPCID(proc)
     moveto = int(moveto)
@@ -341,9 +359,10 @@ def move(proc, moveto):
     paraBuf = writePara(proc, cpara)
         
     cmdBuf = writeCmd(proc, area.moveCmd)
-    dowhile(isNormal, [proc])
+    dountil(isNormal, [proc])
     execCmd(proc, cmdBuf, paraBuf)
     time.sleep(changeDelay)
+    dountil(isNormal, [proc])
 
 def moveSea(proc):
     '''
@@ -360,10 +379,73 @@ def moveSea(proc):
     paraBuf = writePara(proc, cpara)
         
     cmdBuf = writeCmd(proc, area.moveToSeaCmd)
-    dowhile(isNormal, [proc])
+    dountil(isNormal, [proc])
     execCmd(proc, cmdBuf, paraBuf)
     time.sleep(changeDelay)
+    dountil(isNormal, [proc])
+
+def cturnT(proc, cos, sin, slow = True):
+    '''
+    转向
+    '''
+    cos = float(cos)
+    sin = float(sin)
+    assert cos >= -1 and cos <= 1
+    assert sin >= -1 and sin <= 1
     
+    TRIDIFF = 0.1
+    
+    nowcos, nowsin = dolScript.getAngleT(proc)
+    if(slow and not (math.fabs(nowcos - cos) > TRIDIFF or math.fabs(nowsin - sin) > TRIDIFF)):
+        print 'Within diff. No Turn'
+        return
+    cpara = (c_ubyte * PARASIZE)()
+    fp = cast(cpara, POINTER(c_float))
+    fp[0] = cos
+    fp[1] = sin
+    paraBuf = writePara(proc, cpara)
+    cmdBuf = writeCmd(proc, area.turnCmd)
+    
+    flagRun = False
+    count = 0
+    while(math.fabs(nowcos - cos) > TRIDIFF or math.fabs(nowsin - sin) > TRIDIFF): #0.06是允许3度误差的值
+        print "cos diff = %.10f , sin diff = %.10f" % (math.fabs(nowcos - cos), math.fabs(nowsin - sin))
+        flagRun = True
+        if(count % 8 == 0):
+            dountil(isNormal, [proc])
+            execCmd(proc, cmdBuf, paraBuf, False)
+            dountil(isNormal, [proc])
+        time.sleep(0.25)
+        count += 1
+        nowcos, nowsin = dolScript.getAngleT(proc)
+        
+    if(flagRun):
+        execCmd(proc, cmdBuf, paraBuf)
+
+
+def turnT(proc, cos, sin):
+    '''
+    转向
+    '''
+    cos = float(cos)
+    sin = float(sin)
+    assert cos >= -1 and cos <= 1
+    assert sin >= -1 and sin <= 1
+    
+    
+    cpara = (c_ubyte * PARASIZE)()
+    fp = cast(cpara, POINTER(c_float))
+    fp[0] = cos
+    fp[1] = sin
+    paraBuf = writePara(proc, cpara)
+    cmdBuf = writeCmd(proc, area.turnCmd)
+    
+   
+    dountil(isNormal, [proc])
+    execCmd(proc, cmdBuf, paraBuf)
+    dountil(isNormal, [proc])
+       
+
 def turn(proc, deg):
     '''
     以x轴正方向为0度，逆时针
@@ -372,17 +454,8 @@ def turn(proc, deg):
     cos = math.cos(math.radians(deg))
     sin = -math.sin(math.radians(deg))
     
+    turnT(proc, cos, sin)
     
-    cpara = (c_ubyte * PARASIZE)()
-    fp = cast(cpara, POINTER(c_float))
-    fp[0] = cos
-    fp[1] = sin
-    
-    
-    paraBuf = writePara(proc, cpara)
-    cmdBuf = writeCmd(proc, area.turnCmd)
-    dowhile(isNormal, [proc])
-    execCmd(proc, cmdBuf, paraBuf)
 
 def custom(proc, num):
     '''
@@ -409,7 +482,7 @@ def custom(proc, num):
     
     paraBuf = writePara(proc, cpara)
     cmdBuf = writeCmd(proc, area.customCmd)
-    dowhile(isNormal, [proc])
+    dountil(isNormal, [proc])
     execCmd(proc, cmdBuf, paraBuf)
     
 def enterD(proc):
@@ -468,7 +541,7 @@ def enterD(proc):
 def enterDoor(proc, did):
     '''
     '''
-    
+    print 'enterDoor'
     cpara = (c_ubyte * PARASIZE)()
     ip = cast(cpara, POINTER(c_int))
     ip[0] = did
@@ -479,9 +552,10 @@ def enterDoor(proc, did):
     paraBuf = writePara(proc, cpara)
     cmdBuf = writeCmd(proc, area.enterDCmd)
     
-    dowhile(isNormal, [proc])
+    dountil(isNormal, [proc])
     execCmd(proc, cmdBuf, paraBuf)
     time.sleep(changeDelay)
+    dountil(isNormal, [proc])
 
 
 def sail(proc, state):
@@ -507,7 +581,7 @@ def sail(proc, state):
     paraBuf = writePara(proc, cpara)
     cmdBuf = writeCmd(proc, area.sailCmd)
     
-    dowhile(isNormal, [proc])
+    dountil(isNormal, [proc])
     execCmd(proc, cmdBuf, paraBuf)
     
 
@@ -575,7 +649,7 @@ def sellShip(proc, bossid):
     cmdBuf = writeCmd(proc, area.sellShipCmd)
     
     time.sleep(4) #sleep for sell the correct ship, but it doesn't works....
-    dowhile(isNormal, [proc])
+    dountil(isNormal, [proc])
     execCmd(proc, cmdBuf, paraBuf)
     
 def talk(proc, tarid):
@@ -594,7 +668,7 @@ def talk(proc, tarid):
     paraBuf = writePara(proc, cpara)
     cmdBuf = writeCmd(proc, area.talkCmd)
     
-    dowhile(isNormal, [proc])
+    dountil(isNormal, [proc])
     execCmd(proc, cmdBuf, paraBuf)
     
 def buildShip(proc, shipid, woodid, storage, bossid):
@@ -620,7 +694,7 @@ def buildShip(proc, shipid, woodid, storage, bossid):
     paraBuf = writePara(proc, cpara)
     cmdBuf = writeCmd(proc, area.buildShipCmd)
     
-    dowhile(isNormal, [proc])
+    dountil(isNormal, [proc])
     execCmd(proc, cmdBuf, paraBuf)
 
 
@@ -702,7 +776,7 @@ def eat(proc, bossid, water, food):
     paraBuf = writePara(proc, cpara)
     cmdBuf = writeCmd(proc, area.eatCmd)
     
-    dowhile(isNormal, [proc])
+    dountil(isNormal, [proc])
     execCmd(proc, cmdBuf, paraBuf)
 
 
@@ -978,7 +1052,7 @@ def buy(proc, bossid, buyList):
     paraBuf = writePara(proc, cpara)
     cmdBuf = writeCmd(proc, area.buyCmd)
     
-    dowhile(isNormal, [proc])
+    dountil(isNormal, [proc])
     execCmd(proc, cmdBuf, paraBuf)
     return True
 
@@ -1036,14 +1110,17 @@ def sell(proc, bossid, sellList = None):
     infoDict = {}
     for info in infoList:
         infoDict[info.id] = info
-    
+        
     if(sellList != None):
         for gid, count in sellList:
+            print 'gid : %x , count = %d' % (gid, count)
             if(not infoDict.has_key(gid)):
+                print 'no this good'
                 continue
             
             info = infoDict[gid]
             if(info.num < count):
+                print 'not enough'
                 continue
             else:
                 info.num = count
@@ -1086,7 +1163,7 @@ def sell(proc, bossid, sellList = None):
     paraBuf = writePara(proc, cpara)
     cmdBuf = writeCmd(proc, area.sellCmd)
     
-    dowhile(isNormal, [proc])
+    dountil(isNormal, [proc])
     execCmd(proc, cmdBuf, paraBuf)
     return True
 
@@ -1130,5 +1207,26 @@ def getTradeInfo(proc, bossid):
             print "goodid = %x, price = %d, trend = %x, percent = %d" % (goodid, price, trend, percent)
         print
     
- 
+def custom_safe(proc, num, keyNum = 8):
+    num = int(num)
+    keyNum = int(keyNum)
+    assert num >= 1 and num <= 8
+    hlper = helper.ProcessHelper()
+    hwnd = hlper.getHwndByProc(proc)
     
+    ret = Key("KeyClick", hwnd, win32con.VK_ESCAPE)
+    ret = Key("KeyClick", hwnd, win32con.VK_ESCAPE)
+    
+    dountil(isNormal, [proc])
+    ret = Key("KeyClick", hwnd, 0x6F + keyNum)
+    count = 0
+    interval = 0.2
+    timeWait = 4
+    
+    while(not dolScript.isCustomOpen(proc) and count < timeWait / float(interval)):
+        print 'wait custom... %d' % (count)
+        count +=1
+        time.sleep(interval)
+    time.sleep(0.5)
+    ret = Key("KeyClick", hwnd, 0x6F + num)
+    dountil(isNormal, [proc])

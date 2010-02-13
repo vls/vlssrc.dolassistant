@@ -1,7 +1,6 @@
 # -*- coding: gbk -*-
 import sys
-sys.path.append("I:/document/My Documents/Visual Studio 2008/Projects/Cpp/pymemex/Debug")
-import pymemex
+
 import pyqmacro
 import helper
 from dol import dolScript
@@ -14,7 +13,7 @@ import win32gui
 import win32api
 import csv
 
-def dowhile(callback, condition ,  args = [], interval = 0.1):
+def dountil(callback, condition ,  args = [], interval = 0.1):
     while(condition):
         callback(*args)
         time.sleep(interval)
@@ -33,9 +32,10 @@ def main():
     
     mxy = dolScript.getMousePos(hwnd, 0, 0)
     #pyqmacro.invoke('BGKM5.dll','LClick',[hwnd, mxy[0], mxy[1]])
-    ret = dll.Mouse("LClick", hwnd, 627, 495)
-    #ret = dll.Key("KeyClick", hwnd, 0xD)
-
+    #ret = dll.Mouse("LClick", hwnd, 627, 495)
+    #ret = dll.Key("KeyClick", hwnd, win32con.VK_LEFT)
+    ret = dll.Mouse('LDown', hwnd, 240, 180)
+    print ret
     print win32gui.SetActiveWindow(hwnd)
     print win32api.GetLastError()
     #print windll.user32.PostMessageA(hwnd, win32con.WM_KEYDOWN, 9,0x1)

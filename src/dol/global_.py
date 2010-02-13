@@ -27,10 +27,16 @@ VirtualFreeEx = kernel32.VirtualFreeEx
 LoadLibraryA = kernel32.LoadLibraryA
 WriteProcessMemory = kernel32.WriteProcessMemory
 
-def dowhile(func, args = None, interval = 0.2):
+def dountil(func, args = None, interval = 0.2):
     if(args == None):
         args = []
     while(not func(*args)):
+        time.sleep(interval)
+        
+def dowhile(func, args = None, interval = 0.2):
+    if(args == None):
+        args = []
+    while(func(*args)):
         time.sleep(interval)
         
         
@@ -101,6 +107,14 @@ class TextLogger():
         print msglog
         self.writer.write(msglog + os.linesep)
         self.writer.flush()
+
+def msgBox(title = "", message = ""):
+    try:
+        win32api.MessageBox(None, message.decode('utf-8'), title.decode('utf-8'), win32con.MB_ICONINFORMATION | win32con.MB_TOPMOST)
+    except UnicodeDecodeError, e:
+        traceback.print_exc(file=sys.stdout)
+        win32api.MessageBox(None, "Something wrong !!! (Please check the encoding of the file who raise the *beep*)", "Warning", win32con.MB_ICONERROR | win32con.MB_TOPMOST)
+    
     
 def beep(title = "", message = ""):
     for i in range(3):
@@ -108,10 +122,10 @@ def beep(title = "", message = ""):
         time.sleep(0.5)
     try:
         win32api.MessageBox(None, message.decode('utf-8'), title.decode('utf-8'), win32con.MB_ICONERROR | win32con.MB_TOPMOST)
-    except UnicodeDecodeError as e:
+    except UnicodeDecodeError, e:
         traceback.print_exc(file=sys.stdout)
         win32api.MessageBox(None, "Something wrong !!! (Please check the encoding of the file who raise the *beep*)", "Warning", win32con.MB_ICONERROR | win32con.MB_TOPMOST)
-        
+
 def main():
     logger = TextLogger('test.txt')
     logger.log('123')

@@ -111,16 +111,21 @@ def getQuickKey(proc):
         
     return list
 
-def getSeaPos(proc, point):
+def getSeaPos(proc):
     '''返回海上坐标
         return (x,y)
     '''
+    dowhile(isSceneChange, [proc])
+    seq = getSeaSeq(proc)
+    px, py = Sea[seq][1]
     
     x = getFloat(proc, ADDR.PC_X)
+    
     if (x != 0.0 and x != 37000.0):
-        x = (x - 2560000.0) / 10000.0 + point[0]
+        x = (x - 2560000.0) / 10000.0 + px
         y = getFloat(proc, ADDR.PC_Y)
-        y = (y - 2560000.0) / 10000.0 + point[1]
+        
+        y = (y - 2560000.0) / 10000.0 + py
         
         if(x < 0.0 or y < 0.0):
             x = -1.0
@@ -128,6 +133,17 @@ def getSeaPos(proc, point):
         return (x,y)
     else:
         return (-1.0, -1.0)
+    
+def getAngleT(proc):
+    '''
+    返回人物所面向角度
+    return cos, sin
+    '''
+    cos = getFloat(proc, ADDR.PC_COS)
+    #print cos
+    sin = getFloat(proc, ADDR.PC_SIN)
+    return (cos, sin)
+
 
 def getAngle(proc):
     '''返回人物所面向角度
@@ -137,15 +153,21 @@ def getAngle(proc):
         逆时针递增
     '''
     
-    cos = getFloat(proc, ADDR.PC_COS)
-    print cos
-    sin = getFloat(proc, ADDR.PC_SIN)
-    print sin
-    try:
-        cosdeg = math.acos(cos) * 180 / math.pi
-        sindeg = math.asin(sin) * 180 / math.pi
-    except ValueError:
-        return None
+    
+    #print sin
+    count = 0
+    while(True):
+        cos, sin = getAngleT(proc)
+        try:
+            cosdeg = math.acos(cos) * 180 / math.pi
+            sindeg = math.asin(sin) * 180 / math.pi
+            break
+        except ValueError:
+            if(count >= 20):
+                print "getAngle Fail! cos = %.5f, sin = %.5f" % (cos, sin)
+                return
+            count += 1
+            time.sleep(0.1)
     
     angle = cosdeg
     if(sindeg > 0):
@@ -153,11 +175,13 @@ def getAngle(proc):
     
     return angle
 
+
 def getShipState(proc):
     '''返回船只状态列表
         return string
     '''
     value = getInt(proc, ADDR.SHIP_STATE)
+    print value
     if(value == 0):
         return None
     
@@ -343,10 +367,14 @@ def getWeather(proc):
     晴天= 0, 2
     雨天 = 0x20
     大雨 = 0x24 ??
-    暴风雨 = 0x48, 0x42
+    暴风雨 = 0x48, 0x42, 0x41
     阴天 = 0x90 ??
     '''
     return getByte(proc, ADDR.WEATHER)
+
+def isBadWeather(proc):
+    weather = getWeather(proc)
+    return weather >= 0x41 and weather <= 0x48 
 
 def getSailState(proc):
     '''
@@ -417,6 +445,83 @@ def getNPC(proc):
             addr_2 = getInt(proc, addr)
             #print "addr_2 Adjust = %x" % (addr_2)
 
+def isCustomOpen(proc):
+    return getInt(proc, ADDR.BOOL_CUSTOM) != 0
+
+def readLog(proc, searchDepth = 9999):
+    addr = ADDR.LOG_INFO
+    
+    logList = []
+    content = ADDR.LOG_CONTENT
+    base = getInt(proc, content)
+    for i in range(searchDepth):
+        addr = getInt(proc, addr+4)
+        offset = getInt(proc, addr + 12)
+        wordNum = getInt(proc, addr + 20)
+        s = getStringW(proc, base + offset*2, wordNum)
+        logList.append(s)
+        #print s
+        
+        addr = getInt(proc, addr + 4)
+        if(addr == 0):
+            break
+    return logList
+
+def inLog(proc, sub, searchDepth = 5):
+    logList = readLog(proc, searchDepth)
+    for log in logList:
+        #print log
+        if(log.find(sub) != -1):
+            
+            return True
+    return False
+
+def getToRead(proc):
+    '''
+    获取将要读的书的序号
+    return int
+    '''
+    addr = getInt(proc, ADDR.MAP_BASE)
+    if(addr != 0):
+        return getByte(proc, addr + 0x90)
+    return -1
+
+def isReading(proc):
+    '''
+    是否在读书
+    return bool
+    '''
+    addr = getInt(proc, ADDR.MAP_BASE)
+    if(addr != 0):
+        return getShort(proc, addr + 0x196) != 14
+    return False
+
+def isDialogOpen(proc):
+    '''
+    是否對話框已開啟
+    return bool
+    '''
+    return getInt(proc, ADDR.DIALOG) != 0
+
+def getSailor(proc):
+    '''
+    水手数
+    '''
+    return getShort(proc, ADDR.SAILOR)
+
+def getShipHP(proc):
+    '''
+    船耐久
+    '''
+    return getInt(proc, ADDR.SHIP_HP)
+
+def isDead(proc):
+    '''
+    是否遇难
+    return bool
+    '''
+    return getShipHP(proc) == 0 or getSailor(proc) == 0 
+
 #===============================================================================
 # main相关函数
 #===============================================================================
@@ -479,6 +584,18 @@ if __name__ == "__main__":
         print '潮流 = %d' % (getTide(pro))
         print '浪 = %d' % (getWave(pro))
         print '坐标 = %d, %d' % (getLandPos(pro))
+        print '自定义栏开启? = %s' % (isCustomOpen(pro))
+        print '海上坐标 = %d, %d' % (getSeaPos(pro))
+        print '方向 = %.3f, %.3f' % (getAngleT(pro))
+        print '准备读的书是: %d' % (getToRead(pro))
+        sub = '頭腦疲勞'
+        print '%s 是否在log中 : %s' % (sub, inLog(pro, sub))
+        print '是否在讀書: %s' % (isReading(pro))
+        print '是否對話框已開啟: %s' % (isDialogOpen(pro))
+        print inLog(pro, '得到了教會宗教畫的地圖', 3)
+        print '水手数 = %d' % (getSailor(pro))
+        print '船耐久 = %d' % (getShipHP(pro))
+        #readLog(pro)
 #        while(True):
 #            print '海洋坐标: x=%.3f, y=%.3f' % getSeaPos(pro, (0x400, 0xbff))
 #            print '陆地坐标: x=%.3f, y=%.3f' % getLandPos(pro)

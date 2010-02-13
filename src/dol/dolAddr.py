@@ -37,7 +37,7 @@ class ADDR:
     HPMAX = HP + 4                      #最大行动力
     MONEY = HP + 8                      #金钱
     SAILOR = 0xB6FAFC									#当前水手
-    SAILOR_MAX = 0xB700BB
+    
     FATIGUE = HP + 0x10                 #疲劳 > 300吃，（显示值的10倍）
     FOOD = HP + 0x12                    #食品
     WATER = HP + 0x14                   #水
@@ -69,7 +69,7 @@ class ADDR:
     TAB_STATIC = SEA_FOLLOW + 0xEC - 0x68   #TAB 选择静物对象基址 #B6FFC4
     
     LOCATION = SEA_FOLLOW + 0xb0c -0xa68    #所在地方名称基址（包括港口，室内，海域）[[ADDR]]
-    
+    #SAILOR_MAX = 0xB700BB
     SEASEQ = 0xB7004A                   #海域序号
     LOCTYPE = 0xB7004B                  #所在地方类型
     
@@ -89,8 +89,14 @@ class ADDR:
     WEATHER = 0xB538D5 + OFFSET + 0x60 #验证 2010/1/1 #
     SAIL_DAY = WEATHER + 3
     
+    LOG_CONTENT = 0xb73194
+    LOG_INFO = 0xb7303c
+    
+    DIALOG = 0x00BD805c #弹出窗口
+    
     SKILL_BASE = 0xBD8388        #ADDR+0x20+0x38 = 技能数
     
+    MAP_BASE = 0xBE473C         #读图时资料的基址
     #  ADDR + 0x20 + 0xC #技能1ID
     #ADDR + 0x20 + 0x14 #技能2ID
     #ADDR + 0x20 + 0x1C #技能3ID

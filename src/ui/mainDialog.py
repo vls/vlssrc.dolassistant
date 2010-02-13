@@ -13,7 +13,7 @@ import scripts
 import types
 import threadpool
 from threadpool import ThreadPool, makeRequests, WorkRequest
-from client import client
+
 import mainDialogBL
 import win32con
 from w32 import w32
@@ -27,9 +27,7 @@ def MessageBox(hwnd, string, caption, flag):
     windll.user32.MessageBoxW(hwnd, string, caption, flag)
         
 
-class playerListHandler(client.BaseHandler):
-    def handle(self, obj):
-        pass
+
 
 class mainDialog(QMainWindow, Ui_mainDialog):
     
@@ -52,6 +50,9 @@ class mainDialog(QMainWindow, Ui_mainDialog):
         
         self.flagRun = True
         
+        self.staticKeyDict = {
+                              999 : "wiseMin"
+                              }
         self.loadItems()
         self.loadScripts()
         self.pool = ThreadPool(6)
@@ -251,8 +252,11 @@ class mainDialog(QMainWindow, Ui_mainDialog):
             w32.user32.UnregisterHotKey(self.winId().__int__(), k)
     
     def autoRegKey(self):
+        
         self.unRegKey()
+        w32.user32.UnregisterHotKey(self.winId().__int__(), 0xC0) # `键
         self.generateKeyDict()
+        w32.user32.RegisterHotKey(self.winId().__int__(), 999, win32con.MOD_ALT, 0xC0)
         self.regKey()
         
     def invokeScript(self, funcName):
@@ -280,7 +284,7 @@ class mainDialog(QMainWindow, Ui_mainDialog):
         prefunc = None
         try:
             prefunc = getattr(module, "__%s_pre" % (funcName))
-        except AttributeError as e:
+        except AttributeError, e:
             pass
             
         if(prefunc != None):
@@ -396,7 +400,11 @@ class mainDialog(QMainWindow, Ui_mainDialog):
         #print msg.wParam
         if(msg.message == win32con.WM_HOTKEY):
             print "hotkey %d" % (msg.wParam)
-            if(self.keyDict.has_key(msg.wParam)):
+            if(self.staticKeyDict.has_key(msg.wParam)):
+                name = self.staticKeyDict[msg.wParam]
+                func = getattr(self, name)
+                func()
+            elif(self.keyDict.has_key(msg.wParam)):
                 name = self.keyDict[msg.wParam][1]
                 self.invokeScript(name)
         return False, id(msg)

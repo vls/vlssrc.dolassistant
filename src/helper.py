@@ -4,6 +4,7 @@ import win32gui, win32process, win32api, win32con
 import os
 import winnt
 
+
 class ProcessHelper:
     
     
@@ -26,7 +27,7 @@ class ProcessHelper:
         self.mainWindowHandle = 0
         try:
             win32gui.EnumWindows(self.callback, 0)
-        except pywintypes.error as e:
+        except pywintypes.error, e:
             if(win32api.GetLastError() != 0):
                 raise e
             
@@ -45,7 +46,7 @@ class WindowHelper:
         self.mainWindowHandle = 0
         try:
             win32gui.EnumWindows(self.classNameCallback, 0)
-        except pywintypes.error as e:
+        except pywintypes.error, e:
             if(win32api.GetLastError() != 0):
                 raise e
             

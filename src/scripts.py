@@ -13,7 +13,6 @@ import ctypes
 from dol import dolBuildShipScript
 
 from dol.dolBuildShipData import *
-from dll import Mouse, Key
 
 
 ds = dolScript
@@ -37,7 +36,7 @@ window = None
     
 
 
-def __dowhile(callable, args = [], interval = 0.2):
+def dountil(callable, args = [], interval = 0.2):
     while(not callable(*args)):
         time.sleep(interval)
         
@@ -119,8 +118,7 @@ def toDock(hwnd, proc):
     '''
     进入码头
     '''
-    print 'disabled'
-    return
+
     dolSafeCall.move(proc, dolCallEnum.MoveTo.Dock)
 
 def __enterCity_pre(window):
@@ -171,18 +169,21 @@ def __findLead(hwnd):
 
 
 
-def sailing(hwnd, proc, hwndList):
+def sailing(hwnd, proc, hwndList = None):
     '''
     航行异常处理
     '''
     global sailingLock
+    stormWeather = 0x48
+    if(hwndList == None):
+        hwndList = [hwnd]
     
     myid = dolScript.getPCID(proc)
     party = dolScript.getParty(proc)
     
     leadHwnd = None
     
-    stormWeather = 0x48
+    
     myname = dolScript.getRoleName(proc)
     if(party != [] and myid != party[0]):
         for hwnd in hwndList:
@@ -209,7 +210,7 @@ def sailing(hwnd, proc, hwndList):
                 beep(unicode("警告"), unicode("[%s] 断线了！！！" % (myname)))
                 break
             
-            if(dolScript.getWeather(proc) == stormWeather):
+            if(dolScript.isBadWeather(proc)):
                 log("遇到暴风")
                 while(dolScript.getSailState(proc) != 0):
                     dolSafeCall.sail(proc, 0)
@@ -224,7 +225,7 @@ def sailing(hwnd, proc, hwndList):
                 leadProc = WindowHelper.getProcByHwnd(leadHwnd)
                 
                 log("[%s]发现<%s>,请求队长发动驱除技能" % (myname, statetxt)) 
-                __dowhile(dolScript.isNormal, [leadProc])
+                dountil(dolScript.isNormal, [leadProc])
                 dolSafeCall.custom(leadProc, 4)#f4 驱除
                 time.sleep(2)
                 win32api.CloseHandle(leadProc)
@@ -257,13 +258,13 @@ def sailing(hwnd, proc, hwndList):
             
         if(dolScript.getCombat(proc) == 2): #被攻击
             log("停战")
-            __dowhile(dolScript.isNormal, [proc])
+            dountil(dolScript.isNormal, [proc])
             dolSafeCall.custom(proc, 6) #f6 要设置为停战
             time.sleep(0.3)
             
         
                     
-        if(dolScript.getWeather(proc) == stormWeather):
+        if(dolScript.isBadWeather(proc)):
             log("遇到暴风")
             while(dolScript.getSailState(proc) != 0):
                 dolSafeCall.sail(proc, 0)
@@ -280,7 +281,7 @@ def sailing(hwnd, proc, hwndList):
                 
             hp1 = dolScript.getHP(proc)
             log("要补行动力, 行动力 = %d" % (hp1))
-            __dowhile(dolScript.isNormal, [proc])
+            dountil(dolScript.isNormal, [proc])
             
             dolSafeCall.custom(proc, 7) #f7 要设置为料理
             time.sleep(2)
@@ -295,14 +296,14 @@ def sailing(hwnd, proc, hwndList):
         
         if(not dolScript.isAutoSail(proc) and dolScript.getSailState(proc) != 0 and dolScript.getWeather(proc) != stormWeather):
             log("操帆")
-            __dowhile(dolScript.isNormal, [proc])
+            dountil(dolScript.isNormal, [proc])
             dolSafeCall.custom(proc, 1) #f1 要设置为操帆
             time.sleep(2)
             
         statetxt = dolScript.getShipState(proc)
         if(statetxt == "鼠患" or statetxt == "海藻"):
             log("发现<%s>,发动驱除技能" % (statetxt)) 
-            __dowhile(dolScript.isNormal, [proc])
+            dountil(dolScript.isNormal, [proc])
             dolSafeCall.custom(proc, 4)#f4 驱除
             time.sleep(2) 
         
@@ -311,14 +312,14 @@ def sailing(hwnd, proc, hwndList):
         
         if(sCount != 3 and 75 not in sList): #75 == 警戒
             log("发动警戒技能") 
-            __dowhile(dolScript.isNormal, [proc])
+            dountil(dolScript.isNormal, [proc])
             dolSafeCall.custom(proc, 3)#f3 警戒
             time.sleep(2)
             
             
         if(sCount != 3 and 12 not in sList): #12 == 钓鱼
             log("发动钓鱼技能")
-            __dowhile(dolScript.isNormal, [proc])
+            dountil(dolScript.isNormal, [proc])
             dolSafeCall.custom(proc, 2) #f2 钓鱼
             time.sleep(2)
         
@@ -330,7 +331,7 @@ def sailing(hwnd, proc, hwndList):
                 
                 
                 log("要消除疲劳, 疲劳 = %f" % (preFatigue))
-                __dowhile(dolScript.isNormal, [proc])
+                dountil(dolScript.isNormal, [proc])
                 dolSafeCall.custom(proc, 7) #f7 要设置为料理
                 fatigue = dolScript.getFatigue(proc)
                 time.sleep(2)
@@ -347,23 +348,34 @@ def sailing(hwnd, proc, hwndList):
         time.sleep(0.3)
     sailingLock.Release()
     print "Lock released"
-    
-def __BuildShip(hwnd, proc, onSea = None):
-    if(onSea == None):
-        onSea = False
-    else:
-        onSea = True
-    print onSea
+
+def __buildSmall(hwnd, proc, onSea):
     city = blt()
     shipid = 0x19 #小飞
     woodid = 1
     storage = 180
     ticketnum = 2
     day = 6
+    dolBuildShipScript.buildShip(hwnd, proc, city, shipid, woodid, storage, ticketnum, day, onSea)
     
-    
+def __buildMiddle(hwnd, proc, onSea):
+    city = sang782()
+    shipid = 0x1A
+    woodid = 1
+    storage = 400
+    ticketnum = 5
+    day = 12
     
     dolBuildShipScript.buildShip(hwnd, proc, city, shipid, woodid, storage, ticketnum, day, onSea)
+    
+
+def __BuildShip(hwnd, proc, onSea = None):
+    if(onSea == None):
+        onSea = False
+    else:
+        onSea = True
+    print onSea
+    __buildMiddle(hwnd, proc, onSea)
 
 def __feather(hwnd, proc):
     bossid = 0x1800349
@@ -388,7 +400,21 @@ def __feather(hwnd, proc):
                 self.ptr = self.ptr % len(self.switchList)
             return self.switchList[self.ptr]
     
+    def openBook():
+        logger.log('start to make feather')    
+        dolCall.custom(proc, 3) #f3 放书
+        time.sleep(2)
+        dll.Key("KeyClick", hwnd, 0x28) # down arrow
+        time.sleep(1)
+        dll.Key("KeyClick", hwnd, 0xD) # enter
+        time.sleep(3)
+        
+        dll.Mouse("LClick", hwnd, 627, 495)
+        time.sleep(1)
+    
     switch = Switcher([5, 6, 7, 8])
+    
+
         
     while(True):
         if(not dolScript.isOnline(proc)):
@@ -417,16 +443,7 @@ def __feather(hwnd, proc):
                 logger.log('no food?')
                 beep('Epic fail', 'No food !!!')
         
-        logger.log('start to make feather')    
-        dolCall.custom(proc, 3) #f3 放书
-        time.sleep(2)
-        Key("KeyClick", hwnd, 0x28) # down arrow
-        time.sleep(1)
-        Key("KeyClick", hwnd, 0xD) # enter
-        time.sleep(3)
-        
-        Mouse("LClick", hwnd, 627, 495)
-        time.sleep(1)
+        openBook()
         
         hprecord = []
         waitSec = 5
@@ -443,10 +460,23 @@ def __feather(hwnd, proc):
                 return
             hp = dolScript.getHP(proc)
             if(hp < 100):
+                
                 logger.log('hp low during making')
-                dolCall.custom(proc, 7)
+                
+                #Key("KeyClick", hwnd, 0x1b) # esc
+                dll.Mouse("LClick", hwnd, 878, 539)
+                time.sleep(1)
                 for i in range(times):
-                    hprecord[i] = -1
+                        hprecord[i] = -1
+                while(dolScript.getHPRatio(proc) < 0.7):
+                    logger.log('hp ratio = %.3f' % (dolScript.getHPRatio(proc)))
+                    dolCall.custom(proc, switch.getNext())
+                    time.sleep(1)
+                
+                dll.Key("KeyClick", hwnd, 0xD) # enter
+                time.sleep(3)
+        
+                dll.Mouse("LClick", hwnd, 627, 495)
                 time.sleep(1)
             
             hprecord[ptr] = hp
@@ -473,7 +503,120 @@ def __feather(hwnd, proc):
         time.sleep(2)
     
     
+def rushWall(hwnd, proc):
+    '''
+    撞墙
+    '''
+    if(dolScript.getLocationType(proc) != dolCallEnum.LocType.Sea):
+        print 'not in sea! Exit!'
+        return
     
+    myname = dolScript.getRoleName(proc)
+    print myname
+    def __alert():
+        #logger.log( "断线了，退出脚本")
+        title = "警告"
+        message = "[%s] 断线 !!!".decode('utf-8')
+        message = message % (myname)
+        message = message.encode('utf-8')
+        beep(title, message)
     
+    cos, sin = dolScript.getAngleT(proc)
+    cos = -cos
+    sin = -sin
     
+    while(True):
+        if(not dolScript.isOnline(proc)):
+            __alert()
+            return
+            
+        if(dolScript.getLocationType(proc) != dolCallEnum.LocType.Sea):
+            print 'not in sea! Exit!'
+            return
+        
+        dolCall.turnT(proc, cos, sin)
+        print 'turn...'
+        time.sleep(0.2)
+        
+def allTalk(hwnd, proc):
+    '''
+    集体谈话
+    '''
+    hwndList = window.getPlayerHwndList()
+    party = dolScript.getParty(proc)
     
+    leadHwnd = None
+    
+    myid = dolScript.getPCID(proc)
+    myname = dolScript.getRoleName(proc)
+    if(party != [] and myid != party[0]):
+        for hwnd in hwndList:
+            if(__findLead(hwnd)):
+                leadHwnd = hwnd
+        
+        if(leadHwnd == None):
+            print "找不到队长，退出"
+            return
+        
+        leadProc = WindowHelper.getProcByHwnd(leadHwnd)
+                
+        tabid = dolScript.getTabId(leadProc)
+        #print 'party member'
+        #print tabid
+        if(tabid != 0):
+            dolCall.talk(proc, tabid)
+        win32api.CloseHandle(leadProc)
+    else:
+        tabid = dolScript.getTabId(proc)
+        #print 'party leader'
+        #print tabid
+        if(tabid != 0):
+            dolCall.talk(proc, tabid)
+
+def allEnter(hwnd, proc):
+    '''
+    一起按Enter!
+    '''
+    dll.Key("KeyClick", hwnd, 0xD)   
+    
+def __sellOne(hwnd, proc):
+    
+    doupi = 0x186aea
+    douzi = 0x186ada
+    hujiao = 0x186acf
+    
+    name = dolScript.getRoleName(proc)
+    print name
+    tabid = dolScript.getTabId(proc)
+    
+    if(tabid != 0):
+        while(dolCall.sell(proc, tabid, [(doupi, 1)])):
+            print 'sell...'
+            time.sleep(0.13)
+    else:
+        print 'no tab!'
+        
+def __testcrash(hwnd, proc):
+    bossid = 25166675
+    cityid = 68812849        
+    bossx, bossy = (36607, 18685)
+    #===========================================================================
+    # log("Enter dock")    
+    # dolCall.enterDoor(proc, cityid)
+    # log("Into city")
+    # while(dolScript.getLocationType(proc) != dolCallEnum.LocType.Dock):
+    #    log('wait... entering dock')
+    #    time.sleep(0.2)
+    #===========================================================================
+    while(dolScript.getLocationType(proc) != dolCallEnum.LocType.City):
+        log("Into city")
+        dolCall.move(proc, dolCallEnum.MoveTo.DockPlaza) # 码头广场
+        
+    
+    print "%x" % (dolScript.getLocationType(proc))
+    print dolScript.getLocation(proc).encode('gbk')
+    dolCall.walk(proc, bossx, bossy)
+    #dolCall.talk(proc, bossid)
+    #time.sleep(2)
+    #dolCall.sellShip(proc, bossid)
+    #time.sleep(3)

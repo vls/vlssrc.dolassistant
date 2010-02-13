@@ -1,5 +1,4 @@
 ﻿import sys
-sys.path.append("I:\document\My Documents\Visual Studio 2008\Projects\Cpp\pyqmacro\Debug")
 import pyqmacro
 
 

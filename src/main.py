@@ -6,7 +6,7 @@ from w32 import *
 import pyqmacro
 from helper import *
 import getopt
-import client
+
 import sys
 import inspect
 

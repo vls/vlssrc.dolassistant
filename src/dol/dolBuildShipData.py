@@ -13,3 +13,9 @@ class blt: #贝鲁特
         self.bosspos = (36607, 18685)
         self.cityid = 68812849        
         
+class sang782:# 3782
+    def __init__(self):
+        self.bossid = 0x1800603
+        
+        self.bosspos = (36733, 18007)
+        self.cityid = 0x42800d6

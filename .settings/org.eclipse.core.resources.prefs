@@ -1,4 +1,4 @@
-#Thu Feb 04 09:21:26 CST 2010
+#Fri Feb 12 16:43:57 CST 2010
 eclipse.preferences.version=1
 encoding//src/client.py=gbk
 encoding//src/daemon.py=utf-8
@@ -10,10 +10,15 @@ encoding//src/dol/dolCallAddr.py=utf-8
 encoding//src/dol/dolCallEnum.py=utf-8
 encoding//src/dol/dolFirmScript.py=utf-8
 encoding//src/dol/dolFormula.py=utf-8
+encoding//src/dol/dolLib.py=utf-8
 encoding//src/dol/dolSafeCall.py=utf-8
 encoding//src/dol/dolScript.py=utf-8
 encoding//src/dol/enum.py=utf-8
 encoding//src/dol/global_.py=utf-8
+encoding//src/dol/readMap.py=utf-8
+encoding//src/dol/readMapDta.py=utf-8
+encoding//src/dol/roundTrip.py=utf-8
+encoding//src/dol/rtBase.py=utf-8
 encoding//src/helper.py=utf-8
 encoding//src/inject.py=utf-8
 encoding//src/main.py=utf-8

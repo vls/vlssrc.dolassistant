@@ -3,13 +3,11 @@ from dolCall import *
 from dolScript import *
 from dolCallEnum import *
 
-def dowhile(callable, args = [], interval = 0.2):
-    while(not callable(*args)):
-        time.sleep(interval)
+
     
 def follow_safe(proc, userid):
     type = getLocationType(proc)
-    if(type == LocType.City or type == LocType.House):
+    if(type == LocType.City or type == LocType.House or type == LocType.Land):
         follow(proc, userid)
     elif(type == LocType.Sea):
         seafollow(proc, userid)

@@ -15,6 +15,9 @@ class LocType:
     City = 0x8 #城市
     House = 0xc # 室内
     Dock = 0x1c # 码头
+    LandDock = 0x20 # 登陆点
+    Land = 0x10
+    
 
 buyCountDict = {
             0:1,
