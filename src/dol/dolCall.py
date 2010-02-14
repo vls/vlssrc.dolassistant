@@ -19,6 +19,7 @@ import helper
 
 from dolCallEnum import SellInfo, BuyInfo, ToBuy, buyCountDict
 
+isNormal = dolScript.isNormal
 
 area = dolCallCmd.TW
 CALLADDR = dolCallAddr.TW
@@ -55,18 +56,9 @@ def isOnline(proc):
     '''
     return getInt(proc, ADDR.PC_STATE) == 1
 
-def isNormal(proc):
-    '''是否正常，可执行命令的状态
-    == 在线 && !鼠标忙 && !切换场景
-    '''
-    flag = isOnline(proc)
-    #print isBusy(proc)
-    flag2 = not isBusy(proc)
-    flag3 = not isSceneChange(proc)
-    #print "isNormal %s %s %s" % (flag, flag2, flag3)
-    return flag and flag2 and flag3
 
-def writeCmd(proc, cmdList):
+
+def __writeCmd(proc, cmdList):
     '''
     注意：如果成功，需要使用者自行释放内存
     '''
@@ -100,7 +92,7 @@ def writeCmd(proc, cmdList):
     
     return buf
 
-def writePara(proc, cPara):
+def __writePara(proc, cPara):
     '''
     注意：如果成功，需要使用者自行释放内存
     '''
@@ -128,11 +120,21 @@ def writePara(proc, cPara):
     
     return buf
 
-def execCmd(proc, cmdBuf, paraBuf, clean = True):
+def execCmd(proc, cmdList, cPara, clean = True):
     if(not isinstance(clean, bool)):
         print 'invalid parameter'
         return
     #print "cmd, para = %d, %d" % (cmdBuf, paraBuf)
+    
+    if(not dolScript.isOnline(proc)):
+        print 'disconnected when execCmd()'
+        myname = dolScript.getRoleName(proc)
+        #msgBox('断线了！', '[' + myname + '] 断线了！！！')
+        raise dolScript.UnrecoverableException('diconnected')
+    
+    cmdBuf = __writeCmd(proc, cmdList)
+    paraBuf = __writePara(proc, cPara)
+    
     tHandle, tid = win32process.CreateRemoteThread(proc.handle, None, 0, cmdBuf, paraBuf, 0)
     print "Success! ThreadHandle, ThreadID = %d,%d" %( tHandle, tid)
     
@@ -180,11 +182,9 @@ def openDialog(proc, bossid, dialogID, wait = True):
     ip[1] = 0
     ip[2] = dialogID
     
-    paraBuf = writePara(proc, cpara)
-    cmdBuf = writeCmd(proc, area.openDialogCmd)
     
     dountil(isNormal, [proc])
-    execCmd(proc, cmdBuf, paraBuf)
+    execCmd(proc, area.openDialogCmd, cpara)
     if(wait):
         time.sleep(changeDelay)
 
@@ -208,7 +208,7 @@ def __translate(proc, byteList = None):
     for i in range(length):
         buf[i] = byteList[i]
     
-    addr = writePara(proc, buf)
+    addr = __writePara(proc, buf)
     print getStringW(proc, addr, 40)
     
     ret = VirtualFreeEx(proc.handle, addr, 0, win32con.MEM_RELEASE)
@@ -245,7 +245,6 @@ def walk(proc, x, y, diff = 200):
         return
     
     flagRun = False
-    cmdBuf = writeCmd(proc, area.walkCmd)
         
     cpara = (c_ubyte * PARASIZE)()
 
@@ -263,8 +262,7 @@ def walk(proc, x, y, diff = 200):
     #    print "para = %x" % (cpara[i])
     #=======================================================================
         
-        
-    paraBuf = writePara(proc, cpara)
+    
     
     
     while(distance(x, y, nowx, nowy) > diff):
@@ -272,13 +270,13 @@ def walk(proc, x, y, diff = 200):
         flagRun = True
         
         #dountil(isNormal, [proc])
-        execCmd(proc, cmdBuf, paraBuf, False)
+        execCmd(proc, area.walkCmd, cpara, False)
         
         time.sleep(0.2)
         nowx, nowy = dolScript.getLandPos(proc)
         print 'pos diff = %.3f' % (distance(x, y, nowx, nowy))
     if(flagRun):
-        execCmd(proc, cmdBuf, paraBuf)
+        execCmd(proc, area.walkCmd, cpara)
 
     
 def follow(proc, userid):
@@ -286,7 +284,6 @@ def follow(proc, userid):
     
     userid = int(userid)
     
-    cmdBuf = writeCmd(proc, area.followCmd)
     
     
     cpara = (c_ubyte * PARASIZE)()
@@ -312,9 +309,9 @@ def follow(proc, userid):
     #    print "pp = %x" % (cpara[i])
     #===========================================================================
         
-    paraBuf = writePara(proc, cpara)
+    
     dountil(isNormal, [proc])
-    execCmd(proc, cmdBuf, paraBuf)
+    execCmd(proc, area.followCmd, cpara)
     
 def seafollow(proc, userid):
     '''
@@ -322,7 +319,7 @@ def seafollow(proc, userid):
     '''
     userid = int(userid)
     
-    cmdBuf = writeCmd(proc, area.seaFollowCmd)  
+    
     
     cpara = (c_ubyte * PARASIZE)()
     for i in range(len(area.seaFollowPara)):
@@ -331,9 +328,9 @@ def seafollow(proc, userid):
     ip = cast(cpara, POINTER(c_int))
     ip[0] = userid
     
-    paraBuf = writePara(proc, cpara)
+    
     dountil(isNormal, [proc])
-    execCmd(proc, cmdBuf, paraBuf)
+    execCmd(proc, area.seaFollowCmd, cpara)
     
 def move(proc, moveto):
     '''
@@ -356,11 +353,9 @@ def move(proc, moveto):
     ip[1] = moveto
     
     
-    paraBuf = writePara(proc, cpara)
-        
-    cmdBuf = writeCmd(proc, area.moveCmd)
+    
     dountil(isNormal, [proc])
-    execCmd(proc, cmdBuf, paraBuf)
+    execCmd(proc, area.moveCmd, cpara)
     time.sleep(changeDelay)
     dountil(isNormal, [proc])
 
@@ -376,11 +371,11 @@ def moveSea(proc):
     ip[0] = userid
     ip[1] = 0x41d34c
     
-    paraBuf = writePara(proc, cpara)
+    
         
-    cmdBuf = writeCmd(proc, area.moveToSeaCmd)
+    
     dountil(isNormal, [proc])
-    execCmd(proc, cmdBuf, paraBuf)
+    execCmd(proc, area.moveToSeaCmd, cpara)
     time.sleep(changeDelay)
     dountil(isNormal, [proc])
 
@@ -403,8 +398,6 @@ def cturnT(proc, cos, sin, slow = True):
     fp = cast(cpara, POINTER(c_float))
     fp[0] = cos
     fp[1] = sin
-    paraBuf = writePara(proc, cpara)
-    cmdBuf = writeCmd(proc, area.turnCmd)
     
     flagRun = False
     count = 0
@@ -413,14 +406,14 @@ def cturnT(proc, cos, sin, slow = True):
         flagRun = True
         if(count % 8 == 0):
             dountil(isNormal, [proc])
-            execCmd(proc, cmdBuf, paraBuf, False)
+            execCmd(proc, area.turnCmd, cpara, False)
             dountil(isNormal, [proc])
         time.sleep(0.25)
         count += 1
         nowcos, nowsin = dolScript.getAngleT(proc)
         
     if(flagRun):
-        execCmd(proc, cmdBuf, paraBuf)
+        execCmd(proc, area.turnCmd, cpara)
 
 
 def turnT(proc, cos, sin):
@@ -437,12 +430,10 @@ def turnT(proc, cos, sin):
     fp = cast(cpara, POINTER(c_float))
     fp[0] = cos
     fp[1] = sin
-    paraBuf = writePara(proc, cpara)
-    cmdBuf = writeCmd(proc, area.turnCmd)
     
    
     dountil(isNormal, [proc])
-    execCmd(proc, cmdBuf, paraBuf)
+    execCmd(proc, area.turnCmd, cpara)
     dountil(isNormal, [proc])
        
 
@@ -480,10 +471,9 @@ def custom(proc, num):
     # ip[5] = random.randrange(0x3f0000, 0x018effff)
     #===========================================================================
     
-    paraBuf = writePara(proc, cpara)
-    cmdBuf = writeCmd(proc, area.customCmd)
+    
     dountil(isNormal, [proc])
-    execCmd(proc, cmdBuf, paraBuf)
+    execCmd(proc, area.customCmd, cpara)
     
 def enterD(proc):
     '''
@@ -551,11 +541,8 @@ def enterDoor(proc, did):
     
 
     
-    paraBuf = writePara(proc, cpara)
-    cmdBuf = writeCmd(proc, area.enterDCmd)
-    
     dountil(isNormal, [proc])
-    execCmd(proc, cmdBuf, paraBuf)
+    execCmd(proc, area.enterDCmd, cpara)
     time.sleep(changeDelay)
     dountil(isNormal, [proc])
 
@@ -573,18 +560,9 @@ def sail(proc, state):
     ip[0] = state
     ip[1] = 0x41fd08
     
-    #===========================================================================
-    # ip[2] = random.randrange(0x026bFFFF, 0x02830000)
-    # ip[3] = random.randrange(0x027d0000, 0x0283FFFF)
-    # ip[4] = random.randrange(0x026bFFFF, 0x02830000)
-    # ip[5] = random.randrange(0x027d0000, 0x0283FFFF)
-    #===========================================================================
-    
-    paraBuf = writePara(proc, cpara)
-    cmdBuf = writeCmd(proc, area.sailCmd)
     
     dountil(isNormal, [proc])
-    execCmd(proc, cmdBuf, paraBuf)
+    execCmd(proc, area.sailCmd, cpara)
     
 
 
@@ -650,12 +628,9 @@ def sellShip(proc, bossid):
     ip[1] = para2
     ip[2] = 0x53
     
-    paraBuf = writePara(proc, cpara)
-    cmdBuf = writeCmd(proc, area.sellShipCmd)
-    
     time.sleep(4) #sleep for sell the correct ship, but it doesn't works....
     dountil(isNormal, [proc])
-    execCmd(proc, cmdBuf, paraBuf)
+    execCmd(proc, area.sellShipCmd, cpara)
     
 def talk(proc, tarid):
     '''
@@ -670,11 +645,10 @@ def talk(proc, tarid):
     ip = cast(cpara, POINTER(c_int))
     ip[0] = tarid
     
-    paraBuf = writePara(proc, cpara)
-    cmdBuf = writeCmd(proc, area.talkCmd)
+
     
     dountil(isNormal, [proc])
-    execCmd(proc, cmdBuf, paraBuf)
+    execCmd(proc, area.talkCmd, cpara)
     
 def buildShip(proc, shipid, woodid, storage, bossid):
     '''
@@ -696,11 +670,9 @@ def buildShip(proc, shipid, woodid, storage, bossid):
     ip[3] = bossid
     ip[4] = 0x0206
     
-    paraBuf = writePara(proc, cpara)
-    cmdBuf = writeCmd(proc, area.buildShipCmd)
     
     dountil(isNormal, [proc])
-    execCmd(proc, cmdBuf, paraBuf)
+    execCmd(proc, area.buildShipCmd, cpara)
 
 
 
@@ -778,11 +750,9 @@ def eat(proc, bossid, water, food):
     ip[2] = waterid
     ip[3] = bossid
     
-    paraBuf = writePara(proc, cpara)
-    cmdBuf = writeCmd(proc, area.eatCmd)
     
     dountil(isNormal, [proc])
-    execCmd(proc, cmdBuf, paraBuf)
+    execCmd(proc, area.eatCmd, cpara)
 
 
 
@@ -1054,11 +1024,9 @@ def buy(proc, bossid, buyList):
     ip[4] = 0
     ip[5] = 0
     
-    paraBuf = writePara(proc, cpara)
-    cmdBuf = writeCmd(proc, area.buyCmd)
     
     dountil(isNormal, [proc])
-    execCmd(proc, cmdBuf, paraBuf)
+    execCmd(proc, area.buyCmd, cpara)
     return True
 
 def __testDialog(proc):
@@ -1165,11 +1133,9 @@ def sell(proc, bossid, sellList = None):
     ip[4] = 0
     ip[5] = 0
     
-    paraBuf = writePara(proc, cpara)
-    cmdBuf = writeCmd(proc, area.sellCmd)
     
     dountil(isNormal, [proc])
-    execCmd(proc, cmdBuf, paraBuf)
+    execCmd(proc, area.sellCmd, cpara)
     return True
 
 
@@ -1222,6 +1188,10 @@ def custom_safe(proc, num, keyNum = 8):
     
     hlper = helper.ProcessHelper()
     hwnd = hlper.getHwndByProc(proc)
+    
+    if(dolScript.isCustomOpen(proc)):
+        Key("KeyClick", hwnd, win32con.VK_F1)
+        time.sleep(0.5)
     
     ret = Key("KeyClick", hwnd, win32con.VK_ESCAPE)
     ret = Key("KeyClick", hwnd, win32con.VK_ESCAPE)
