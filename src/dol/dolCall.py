@@ -139,7 +139,7 @@ def execCmd(proc, cmdBuf, paraBuf, clean = True):
     
     
     
-    win32event.WaitForSingleObject(tHandle, -1)
+    win32event.WaitForSingleObject(tHandle, 30)
     ret = win32api.CloseHandle(tHandle)
     if(ret == 0):
         raise MemException("Close handle failed!")
@@ -230,7 +230,7 @@ def __getstr(proc, addr):
 # Specific functions    
 #===============================================================================
 
-def walk(proc, x, y, diff = 500):
+def walk(proc, x, y, diff = 200):
     print 'walk'
     x = float(x)
     y = float(y)
@@ -542,6 +542,8 @@ def enterDoor(proc, did):
     '''
     '''
     print 'enterDoor'
+    did = int(did)
+    
     cpara = (c_ubyte * PARASIZE)()
     ip = cast(cpara, POINTER(c_int))
     ip[0] = did
@@ -630,6 +632,9 @@ def sellShip(proc, bossid):
         openDialog(proc, bossid, 0x53)
     
         while(True):
+            if(not dolScript.isOnline(proc)):
+                return
+            
             if(__isOpened(proc)):
                 print "Open finished!"
                 break      
@@ -1211,6 +1216,10 @@ def custom_safe(proc, num, keyNum = 8):
     num = int(num)
     keyNum = int(keyNum)
     assert num >= 1 and num <= 8
+    
+    if(not dolScript.isOnline(proc)):
+        return
+    
     hlper = helper.ProcessHelper()
     hwnd = hlper.getHwndByProc(proc)
     
@@ -1228,5 +1237,6 @@ def custom_safe(proc, num, keyNum = 8):
         count +=1
         time.sleep(interval)
     time.sleep(0.5)
+    print 'press key %d' % (0x6F + num)
     ret = Key("KeyClick", hwnd, 0x6F + num)
     dountil(isNormal, [proc])
