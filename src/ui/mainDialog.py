@@ -366,19 +366,19 @@ class mainDialog(QMainWindow, Ui_mainDialog):
         infoList = mainDialogBL.getDolList()
         self.tblPlayer.setRowCount(0)
         row = 0
-        for info in infoList:
+        for name, hwnd, uid in infoList:
             self.tblPlayer.insertRow(row)
             
             item = QtGui.QTableWidgetItem()
-            item.setText(info[0])
+            item.setText(name)
             self.tblPlayer.setItem(row, 0, item)
             
             item = QtGui.QTableWidgetItem()
-            item.setText(str(info[1]))
+            item.setText(str(hwnd))
             self.tblPlayer.setItem(row, 1, item)
             
             item = QtGui.QTableWidgetItem()
-            item.setText(str(info[2]))
+            item.setText(str(uid))
             self.tblPlayer.setItem(row, 2, item)
             
             row += 1

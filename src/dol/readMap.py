@@ -46,7 +46,7 @@ class readMapClass(rtBaseClass):
         if(paraList == None):
             paraList = []
         for hwnd in self.fellowList:
-            req = WorkRequest(self.funcWrap, [hwnd, callfunc, paraList, procPos, hwndPos])
+            req = WorkRequest(self.funcWrap, [hwnd, callfunc, list(paraList), procPos, hwndPos])
             self.pool.putRequest(req)
             
     
@@ -55,7 +55,7 @@ class readMapClass(rtBaseClass):
         procGuard = helper.ProcGuard(hwnd)
         print 'paraList before = %s' % (paraList)
         if(hwndPos != -1):
-            paraList.insert(hwndPos, procGuard.proc)
+            paraList.insert(hwndPos, hwnd)
         
         if(procPos != -1):
             paraList.insert(procPos, procGuard.proc)
@@ -89,7 +89,9 @@ class readMapClass(rtBaseClass):
         
         
         while(True):
-            dolCall.openDialog(proc, self.cityRead.manID, 0x83)
+            while(not dolScript.isDialogOpen(proc)):
+                dolCall.openDialog(proc, self.cityRead.manID, 0x83)
+                time.sleep(0.5)
             dountil(dolScript.isDialogOpen, [proc])
             
             while(dolScript.getToRead(proc) != 5): #5是美术
@@ -115,8 +117,8 @@ class readMapClass(rtBaseClass):
                     startTime = time.time()
                     if(isFellow):
                         procGuard = helper.ProcGuard(hwnd)
-                        
-                        dolCall.writeMem(procGuard.proc, statusAddr, 1)
+                        print '[%s] 疲劳了， 写内存' % (myname)
+                        dolCall.writeMem(procGuard.proc, statusAddr, dolCall.c_uint(1))
                     else:
                         okFellowDict = {}
                         if(len(self.fellowList) > 0):
@@ -159,35 +161,27 @@ class readMapClass(rtBaseClass):
                     time.sleep(1)
                     
                     tarhwnd = self.serHwnd
-                    procGuard = helper.ProcGuard(tarhwnd)
-                    self.makeBuy(tarhwnd, procGuard.proc)
+                    
+                    self.makeBuy(tarhwnd, hwnd)
                     break
                     
                 time.sleep(0.2)
         
         
     
-    def makeBuy(self, tarhwnd, tarproc):
-        lockAddr = 0xAFD600
-        proc = self.proc
+    def makeBuy(self, tarhwnd, myhwnd):
+        tarprocGuard = helper.ProcGuard(tarhwnd)
+        myprocGuard = helper.ProcGuard(myhwnd)
+        
+        proc = myprocGuard.proc
+        tarproc = tarprocGuard.proc
+        
         myid = dolScript.getPCID(proc)
         myname = dolScript.getRoleName(proc)
         tarname = dolScript.getRoleName(tarproc)
         print tarname
-        while(True):
-            
-            while(dolScript.getInt(tarproc, lockAddr) != 0):
-                print dolScript.getInt(tarproc, lockAddr)
-                print '[%s] waiting lock' % (myname)
-                time.sleep(0.2)
-            
-            try:
-                dolCall.writeMem(tarproc, lockAddr, dolCall.c_uint(myid))
-            except dolCall.MemException, e:
-                pass
-                
-            if(dolCall.getInt(tarproc, lockAddr) == myid):
-                break
+        
+        lock = MutexGuard(mutex)
         
         dolCall.openDialog(tarproc, myid, 0x32)
         dountil(dolScript.isDialogOpen, [tarproc])
@@ -195,10 +189,9 @@ class readMapClass(rtBaseClass):
         win32gui.ShowWindow(tarhwnd, win32con.SW_RESTORE)
         win32gui.SetActiveWindow(tarhwnd)
         win32gui.SetForegroundWindow(tarhwnd)
-        msgBox(tarname, '請購買露天……')
+        msgBox(tarname, '請購買 [' + myname + '] 的露天……')
         win32gui.ShowWindow(tarhwnd, win32con.SW_MINIMIZE)
         time.sleep(2)
-        dolCall.writeMem(tarproc, lockAddr, dolCall.c_uint(0))
         
     
     def toReadDock(self):
@@ -212,7 +205,7 @@ class readMapClass(rtBaseClass):
             time.sleep(0.5)
         
         myid = dolScript.getPCID(proc)
-        self.makeAllDo(dolCall.seafollow, [myid])
+        self.makeAllDo(dolCall.follow, [myid])
         
         gotoCity(proc, cityID, self.citySec.cityRouteDict[cityID])
         self.nextDoFunc = self.dock2Lib
@@ -229,7 +222,7 @@ class readMapClass(rtBaseClass):
             time.sleep(0.5)
         
         myid = dolScript.getPCID(proc)
-        self.makeAllDo(dolCall.seafollow, [myid])
+        self.makeAllDo(dolCall.follow, [myid])
             
         gotoCity(proc, cityID, self.cityRead.cityRouteDict[cityID])
         self.nextDoFunc = self.toReadDock
@@ -312,4 +305,3 @@ def rmmain(proc):
     rm = readMapClass(proc, cRead, cSec, serHwnd, '得到了教會祭器的地圖')
     
     rm.main()
-    #win32api.CloseHandle(tarproc)

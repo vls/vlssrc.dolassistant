@@ -58,82 +58,68 @@ def isOnline(proc):
 
 
 
-def __writeCmd(proc, cmdList):
-    '''
-    注意：如果成功，需要使用者自行释放内存
-    '''
-    size = CMDSIZE
-    
-    assert len(cmdList) == size
-    cmd = (c_ubyte * size)()
-    
-    for i in range(size):
-        cmd[i] = cmdList[i]
-        
-    buf = VirtualAllocEx(proc.handle, None, size, win32con.MEM_COMMIT, win32con.PAGE_READWRITE)
-    if(buf == 0):
-        print proc
-        print "error = %d" % (win32api.GetLastError())
-        raise MemException('VirtualAllocEx Fails')
-    
-    written = c_long(0) 
-    ret = WriteProcessMemory(proc.handle, buf, byref(cmd), size, byref(written))
-    
-    if(written.value != size):
-        ret = VirtualFreeEx(proc.handle, buf, 0, win32con.MEM_RELEASE)
-        if (ret == 0):
-            raise MemException("Release memory failed!")
-        raise MemException("WriteProcessMemory() does NOT write the complete command!")
-    if(ret == 0):
-        ret = VirtualFreeEx(proc.handle, buf, 0, win32con.MEM_RELEASE)
-        if (ret == 0):
-            raise MemException("Release memory failed!")
-        raise MemException('WriteProcessMemory() fails!')
-    
-    return buf
 
-def __writePara(proc, cPara):
-    '''
-    注意：如果成功，需要使用者自行释放内存
-    '''
-    #
-    size = sizeof(cPara)
+class MemGuard():
+    def __init__(self, proc, size):
+        self.proc = proc
+        self.size = size
+        self.buf = VirtualAllocEx(proc.handle, None, size, win32con.MEM_COMMIT, win32con.PAGE_READWRITE)
+        if(self.buf == 0):
+            raise MemException('VirtualAllocEx Fails')
         
-    buf = VirtualAllocEx(proc.handle, None, size, win32con.MEM_COMMIT, win32con.PAGE_READWRITE)
-    if(buf == 0):
-        raise MemException('VirtualAllocEx Fails')
-    
-    written = c_long(0) 
-      
-    ret = WriteProcessMemory(proc.handle, buf, byref(cPara), size, byref(written))
-    
-    if(written.value != size):
-        ret = VirtualFreeEx(proc.handle, buf, 0, win32con.MEM_RELEASE)
+        
+    def write(self, writeBuf):
+        written = c_long(0)
+        if(sizeof(writeBuf) > self.size):
+            print 'Too large buffer'
+            raise MemException("Too large buffer")
+        
+        ret = WriteProcessMemory(self.proc.handle, self.buf, byref(writeBuf), self.size, byref(written))
+        
+        if(written.value != self.size):
+            raise MemException("WriteProcessMemory() does NOT write the complete command!")
+        
         if (ret == 0):
+            print 'LastError = %d' % (win32api.GetLastError())            
             raise MemException("Release memory failed!")
-        raise MemException("WriteProcessMemory() does NOT write the complete command!")
-    if(ret == 0):
-        ret = VirtualFreeEx(proc.handle, buf, 0, win32con.MEM_RELEASE)
+        
+        return self.buf
+        
+    def __del__(self):
+        ret = VirtualFreeEx(self.proc.handle, self.buf, 0, win32con.MEM_RELEASE)
         if (ret == 0):
+            print 'LastError = %d' % (win32api.GetLastError())
             raise MemException("Release memory failed!")
-        raise MemException('WriteProcessMemory() fails!')
-    
-    return buf
+        print 'Clean OK'
 
-def execCmd(proc, cmdList, cPara, clean = True):
-    if(not isinstance(clean, bool)):
-        print 'invalid parameter'
-        return
+def execCmd(proc, cmdList, cPara):
+    #===========================================================================
+    # if(not isinstance(clean, bool)):
+    #    print 'invalid parameter'
+    #    return
+    #===========================================================================
     #print "cmd, para = %d, %d" % (cmdBuf, paraBuf)
     
     if(not dolScript.isOnline(proc)):
         print 'disconnected when execCmd()'
-        myname = dolScript.getRoleName(proc)
-        #msgBox('断线了！', '[' + myname + '] 断线了！！！')
-        raise dolScript.UnrecoverableException('diconnected')
+        raise dolScript.UnrecoverableException('disconnected')
     
-    cmdBuf = __writeCmd(proc, cmdList)
-    paraBuf = __writePara(proc, cPara)
+    size = len(cmdList)
+    
+    #assert len(cmdList) == size
+    cmd = (c_ubyte * size)()
+    
+    for i in range(size):
+        cmd[i] = cmdList[i]
+    
+    cmdGuard = MemGuard(proc, size)
+    cmdGuard.write(cmd)
+    cmdBuf = cmdGuard.buf
+    
+    paraGuard = MemGuard(proc, sizeof(cPara))
+    paraGuard.write(cPara)
+
+    paraBuf = paraGuard.buf
     
     tHandle, tid = win32process.CreateRemoteThread(proc.handle, None, 0, cmdBuf, paraBuf, 0)
     print "Success! ThreadHandle, ThreadID = %d,%d" %( tHandle, tid)
@@ -141,20 +127,14 @@ def execCmd(proc, cmdList, cPara, clean = True):
     
     
     
-    win32event.WaitForSingleObject(tHandle, 30)
+    ret = win32event.WaitForSingleObject(tHandle, win32event.INFINITE)
+    if(ret != win32event.WAIT_OBJECT_0):
+        print 'Result of waitforSingleObject = %d' % (ret)
+        raise MemException('WaitForSingleObject fail')
     ret = win32api.CloseHandle(tHandle)
     if(ret == 0):
+        print 'Last error = %d' % (win32api.GetLastError())
         raise MemException("Close handle failed!")
-    if(clean):
-        ret = VirtualFreeEx(proc.handle, cmdBuf, 0, win32con.MEM_RELEASE)
-        if(ret == 0):
-            raise MemException("Release memory failed!")
-        
-        ret = VirtualFreeEx(proc.handle, paraBuf, 0, win32con.MEM_RELEASE)
-        if(ret == 0):
-            raise MemException("Release memory failed!")
-        
-        print "Cleaned"
     
 def writeMem(proc, addr, writeBuf):
     
@@ -208,7 +188,9 @@ def __translate(proc, byteList = None):
     for i in range(length):
         buf[i] = byteList[i]
     
-    addr = __writePara(proc, buf)
+    paraGuard = MemGuard(proc, length)
+    
+    addr = paraGuard.write(buf)
     print getStringW(proc, addr, 40)
     
     ret = VirtualFreeEx(proc.handle, addr, 0, win32con.MEM_RELEASE)
@@ -230,6 +212,37 @@ def __getstr(proc, addr):
 # Specific functions    
 #===============================================================================
 
+
+def __testcrash(proc, x, y):
+    
+    hlper = helper.ProcessHelper()
+    hwnd = hlper.getHwndByProc(proc)
+    print win32event.INFINITE
+
+    
+    while(True):
+        guard = helper.ProcGuard(hwnd)
+        walkonce(guard.proc, x, y)
+        time.sleep(0.1)
+    
+
+def walkonce(proc, x, y):
+    x = float(x)
+    y = float(y)
+    
+    cpara = (c_ubyte * PARASIZE)()
+
+    fpara = cast(cpara, POINTER(c_float))
+    #print "x=%f, y=%f" % (x,y)
+    fpara[0] = x
+    fpara[1] = y
+    
+    ipara = cast(cpara, POINTER(c_int))
+    for i in range(4):
+        ipara[i+2] = getInt(proc, area.walkSeqAddrList[i])
+    
+    execCmd(proc, area.walkCmd, cpara)
+    
 def walk(proc, x, y, diff = 200):
     print 'walk'
     x = float(x)
@@ -246,16 +259,7 @@ def walk(proc, x, y, diff = 200):
     
     flagRun = False
         
-    cpara = (c_ubyte * PARASIZE)()
-
-    fpara = cast(cpara, POINTER(c_float))
-    #print "x=%f, y=%f" % (x,y)
-    fpara[0] = x
-    fpara[1] = y
     
-    ipara = cast(cpara, POINTER(c_int))
-    for i in range(4):
-        ipara[i+2] = getInt(proc, area.walkSeqAddrList[i])
         
     #=======================================================================
     # for i in range(24):
@@ -266,17 +270,16 @@ def walk(proc, x, y, diff = 200):
     
     
     while(distance(x, y, nowx, nowy) > diff):
-        
+        print 'is Online = %s' % (dolScript.isOnline(proc))
         flagRun = True
         
         #dountil(isNormal, [proc])
-        execCmd(proc, area.walkCmd, cpara, False)
+        walkonce(proc, x, y)
         
         time.sleep(0.2)
         nowx, nowy = dolScript.getLandPos(proc)
         print 'pos diff = %.3f' % (distance(x, y, nowx, nowy))
-    if(flagRun):
-        execCmd(proc, area.walkCmd, cpara)
+
 
     
 def follow(proc, userid):
@@ -284,19 +287,25 @@ def follow(proc, userid):
     
     userid = int(userid)
     
+    type = 0x3C
     
+    if(dolScript.getLocationType(proc) == dolCallEnum.LocType.Sea):
+        type = 0x3B
     
     cpara = (c_ubyte * PARASIZE)()
     
-    for i in range(len(area.followPara)):
-        cpara[i] = area.followPara[i]
+    #===========================================================================
+    # for i in range(len(area.followPara)):
+    #    cpara[i] = area.followPara[i]
+    #===========================================================================
         
         
     p = cast(cpara, POINTER(c_int))
     #print cpara
     #print p
     
-    p[0] = userid    
+    p[0] = userid
+    p[1] = type
     
     #high = random.randrange(0x100,0x1FF) << 16
     #p[5] += high
@@ -312,25 +321,7 @@ def follow(proc, userid):
     
     dountil(isNormal, [proc])
     execCmd(proc, area.followCmd, cpara)
-    
-def seafollow(proc, userid):
-    '''
-    海上跟随
-    '''
-    userid = int(userid)
-    
-    
-    
-    cpara = (c_ubyte * PARASIZE)()
-    for i in range(len(area.seaFollowPara)):
-        cpara[i] = area.seaFollowPara[i]
-    
-    ip = cast(cpara, POINTER(c_int))
-    ip[0] = userid
-    
-    
-    dountil(isNormal, [proc])
-    execCmd(proc, area.seaFollowCmd, cpara)
+
     
 def move(proc, moveto):
     '''
@@ -379,41 +370,43 @@ def moveSea(proc):
     time.sleep(changeDelay)
     dountil(isNormal, [proc])
 
-def cturnT(proc, cos, sin, slow = True):
-    '''
-    转向
-    '''
-    cos = float(cos)
-    sin = float(sin)
-    assert cos >= -1 and cos <= 1
-    assert sin >= -1 and sin <= 1
-    
-    TRIDIFF = 0.1
-    
-    nowcos, nowsin = dolScript.getAngleT(proc)
-    if(slow and not (math.fabs(nowcos - cos) > TRIDIFF or math.fabs(nowsin - sin) > TRIDIFF)):
-        print 'Within diff. No Turn'
-        return
-    cpara = (c_ubyte * PARASIZE)()
-    fp = cast(cpara, POINTER(c_float))
-    fp[0] = cos
-    fp[1] = sin
-    
-    flagRun = False
-    count = 0
-    while(math.fabs(nowcos - cos) > TRIDIFF or math.fabs(nowsin - sin) > TRIDIFF): #0.06是允许3度误差的值
-        print "cos diff = %.10f , sin diff = %.10f" % (math.fabs(nowcos - cos), math.fabs(nowsin - sin))
-        flagRun = True
-        if(count % 8 == 0):
-            dountil(isNormal, [proc])
-            execCmd(proc, area.turnCmd, cpara, False)
-            dountil(isNormal, [proc])
-        time.sleep(0.25)
-        count += 1
-        nowcos, nowsin = dolScript.getAngleT(proc)
-        
-    if(flagRun):
-        execCmd(proc, area.turnCmd, cpara)
+#===============================================================================
+# def cturnT(proc, cos, sin, slow = True):
+#    '''
+#    转向
+#    '''
+#    cos = float(cos)
+#    sin = float(sin)
+#    assert cos >= -1 and cos <= 1
+#    assert sin >= -1 and sin <= 1
+#    
+#    TRIDIFF = 0.1
+#    
+#    nowcos, nowsin = dolScript.getAngleT(proc)
+#    if(slow and not (math.fabs(nowcos - cos) > TRIDIFF or math.fabs(nowsin - sin) > TRIDIFF)):
+#        print 'Within diff. No Turn'
+#        return
+#    cpara = (c_ubyte * PARASIZE)()
+#    fp = cast(cpara, POINTER(c_float))
+#    fp[0] = cos
+#    fp[1] = sin
+#    
+#    flagRun = False
+#    count = 0
+#    while(math.fabs(nowcos - cos) > TRIDIFF or math.fabs(nowsin - sin) > TRIDIFF): #0.06是允许3度误差的值
+#        print "cos diff = %.10f , sin diff = %.10f" % (math.fabs(nowcos - cos), math.fabs(nowsin - sin))
+#        flagRun = True
+#        if(count % 8 == 0):
+#            dountil(isNormal, [proc])
+#            execCmd(proc, area.turnCmd, cpara, False) //watch out!
+#            dountil(isNormal, [proc])
+#        time.sleep(0.25)
+#        count += 1
+#        nowcos, nowsin = dolScript.getAngleT(proc)
+#        
+#    if(flagRun):
+#        execCmd(proc, area.turnCmd, cpara)
+#===============================================================================
 
 
 def turnT(proc, cos, sin):
@@ -1189,9 +1182,11 @@ def custom_safe(proc, num, keyNum = 8):
     hlper = helper.ProcessHelper()
     hwnd = hlper.getHwndByProc(proc)
     
+
     if(dolScript.isCustomOpen(proc)):
-        Key("KeyClick", hwnd, win32con.VK_F1)
-        time.sleep(0.5)
+        Key("KeyClick", hwnd, win32con.VK_F9)
+        
+        time.sleep(2)
     
     ret = Key("KeyClick", hwnd, win32con.VK_ESCAPE)
     ret = Key("KeyClick", hwnd, win32con.VK_ESCAPE)

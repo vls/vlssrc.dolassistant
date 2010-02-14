@@ -108,9 +108,20 @@ class TextLogger():
         self.writer.write(msglog + os.linesep)
         self.writer.flush()
 
+
+class MutexGuard:
+    def __init__(self, lock):
+        self.lock = lock
+        self.lock.acquire()
+        print '%s acquired' % (self.lock)
+    
+    def __del__(self):
+        self.lock.release() 
+        print '%s released' % (self.lock)
+
 def msgBox(title = "", message = ""):
     try:
-        win32api.MessageBox(None, message.decode('utf-8'), title.decode('utf-8'), win32con.MB_ICONINFORMATION | win32con.MB_TOPMOST)
+        win32api.MessageBox(None, message.decode('utf-8'), title.decode('utf-8'), win32con.MB_ICONINFORMATION | win32con.MB_TOPMOST | win32con.MB_SYSTEMMODAL | win32con.MB_SETFOREGROUND)
     except UnicodeDecodeError, e:
         traceback.print_exc(file=sys.stdout)
         win32api.MessageBox(None, "Something wrong !!! (Please check the encoding of the file who raise the *beep*)", "Warning", win32con.MB_ICONERROR | win32con.MB_TOPMOST)
@@ -121,7 +132,7 @@ def beep(title = "", message = ""):
         win32api.MessageBeep(win32con.MB_ICONEXCLAMATION)
         time.sleep(0.5)
     try:
-        win32api.MessageBox(None, message.decode('utf-8'), title.decode('utf-8'), win32con.MB_ICONERROR | win32con.MB_TOPMOST)
+        win32api.MessageBox(None, message.decode('utf-8'), title.decode('utf-8'), win32con.MB_ICONERROR | win32con.MB_TOPMOST | win32con.MB_SYSTEMMODAL | win32con.MB_SETFOREGROUND)
     except UnicodeDecodeError, e:
         traceback.print_exc(file=sys.stdout)
         win32api.MessageBox(None, "Something wrong !!! (Please check the encoding of the file who raise the *beep*)", "Warning", win32con.MB_ICONERROR | win32con.MB_TOPMOST)

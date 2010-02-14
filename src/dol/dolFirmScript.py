@@ -49,13 +49,16 @@ def __getSmall(proc):
 
 def __testOp(proc):
     bossid = dolScript.getTabId(proc)
-    bossid = dolScript.getPCID(proc)
-    dia = 0x20
+    bossid = 0x1800476
+    dia = 0x65
     if(bossid != 0):
     
         dolCall.openDialog(proc, bossid, dia, False)
     else:
         print 'no tab'
+        
+
+        
 def __testOpen(proc):
     
     
@@ -65,7 +68,7 @@ def __testOpen(proc):
         
         print dolScript.getTabName(proc)
         
-        for dia in range(0x20 + 1, 0xFF):
+        for dia in range(0x4c, 0xFF):
             print "%x" % (dia)
             dolCall.openDialog(proc, bossid, dia, False)
             time.sleep(2)

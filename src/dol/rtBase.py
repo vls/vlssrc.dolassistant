@@ -2,7 +2,6 @@
 
 class rtCityBase():
     def __init__(self):
-        self.cityID = 0
         self.name = ''
         self.cityRouteDict = {}
 

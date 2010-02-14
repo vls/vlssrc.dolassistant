@@ -9,7 +9,7 @@ from dolAddr import ADDR
 from enum import QuickKey, ShipState, Sea
 import time
 import math
-import win32gui
+import win32gui, win32con
 
 from global_ import *
 
@@ -181,7 +181,6 @@ def getShipState(proc):
         return string
     '''
     value = getInt(proc, ADDR.SHIP_STATE)
-    print value
     if(value == 0):
         return None
     
@@ -313,10 +312,16 @@ def isOnline(proc):
     '''
     return getInt(proc, ADDR.PC_STATE) == 1
 
+class UnrecoverableException(Exception):
+    pass
+
 def isNormal(proc):
     '''是否正常，可执行命令的状态
     == 在线 && !鼠标忙 && !切换场景
     '''
+    if(not isOnline(proc)):
+        raise UnrecoverableException('diconnected')
+    
     return isOnline(proc) and (not isBusy(proc)) and (not isSceneChange(proc))
 
 def getLocationType(proc):
@@ -349,7 +354,7 @@ def getCombat(proc):
 def getSkill(proc):
     '''
     获取使用技能状态
-    (数目， 技能1ID, 技能2ID, 技能3ID)
+    (数目， [技能1ID, 技能2ID, 技能3ID])
     '''
     addr = getInt(proc, ADDR.SKILL_BASE)
     addr = getInt(proc, addr+0x20)
@@ -467,7 +472,7 @@ def readLog(proc, searchDepth = 9999):
             break
     return logList
 
-def inLog(proc, sub, searchDepth = 5):
+def inLog(proc, sub, searchDepth = 3):
     logList = readLog(proc, searchDepth)
     for log in logList:
         #print log
@@ -492,8 +497,12 @@ def isReading(proc):
     return bool
     '''
     addr = getInt(proc, ADDR.MAP_BASE)
+    #print 'isReading(): addr = %x' % (addr)
     if(addr != 0):
-        return getShort(proc, addr + 0x196) != 14
+        status = getByte(proc, addr + 0x196)
+        print "reading status = %x" % (status)
+        return status != 14
+    
     return False
 
 def isDialogOpen(proc):
@@ -521,6 +530,22 @@ def isDead(proc):
     return bool
     '''
     return getShipHP(proc) == 0 or getSailor(proc) == 0 
+
+def getReportSeq(proc):
+    '''
+    获取报告时学科序号
+    '''
+    addr = getInt(proc, ADDR.DIALOG)
+    if(addr != 0):
+        seq = getByte(proc, addr + 0x6BC)
+        return seq
+    return -1
+
+def getMoney(proc):
+    '''
+    获取金钱数目
+    '''
+    return getInt(proc, ADDR.MONEY)
 
 #===============================================================================
 # main相关函数
@@ -568,8 +593,6 @@ if __name__ == "__main__":
         print '队伍列表 = %s' % (getParty(pro))
         #print '快捷键 = %s' % (getQuickKey(pro))
         print '角度 = %s' % (getAngle(pro))
-        print 'TAB ID = %#x' % (getTabId(pro))
-        print 'TAB对象 = %s<end>' % (getTabName(pro))
         print '陆地跟随 = %d' % (getLandFollow(pro))
         print '正常 = %s' % (isNormal(pro))
         print '所在地方类型 = %x' % (getLocationType(pro))
@@ -583,18 +606,29 @@ if __name__ == "__main__":
         print '帆位 = %d' % (getSailState(pro))
         print '潮流 = %d' % (getTide(pro))
         print '浪 = %d' % (getWave(pro))
+        print 'TAB ID = %#x' % (getTabId(pro))
+        print 'TAB对象 = %s<end>' % (getTabName(pro))
         print '坐标 = %d, %d' % (getLandPos(pro))
         print '自定义栏开启? = %s' % (isCustomOpen(pro))
         print '海上坐标 = %d, %d' % (getSeaPos(pro))
         print '方向 = %.3f, %.3f' % (getAngleT(pro))
         print '准备读的书是: %d' % (getToRead(pro))
-        sub = '頭腦疲勞'
+        sub = '未能發現任何物品'
         print '%s 是否在log中 : %s' % (sub, inLog(pro, sub))
         print '是否在讀書: %s' % (isReading(pro))
         print '是否對話框已開啟: %s' % (isDialogOpen(pro))
         print inLog(pro, '得到了教會宗教畫的地圖', 3)
         print '水手数 = %d' % (getSailor(pro))
         print '船耐久 = %d' % (getShipHP(pro))
+        print '金钱 = %d' % (getMoney(pro))
+
+        print "%s %s" % (getInt(pro, ADDR.DIALOG) != 0, not isReading(pro))
+        print "%x" % (win32con.MB_ICONINFORMATION)
+        print "%x" % (win32con.MB_SETFOREGROUND)
+        print "%x" % (win32con.MB_ICONINFORMATION | win32con.MB_TOPMOST | win32con.MB_SYSTEMMODAL | win32con.MB_SETFOREGROUND)
+        print inLog(pro, '未能發現任何物品')
+        print not inLog(pro, '開鎖失敗了')
+        
         #readLog(pro)
 #        while(True):
 #            print '海洋坐标: x=%.3f, y=%.3f' % getSeaPos(pro, (0x400, 0xbff))

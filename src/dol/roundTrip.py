@@ -13,10 +13,7 @@ def gotoCity(proc, cityid, wayPointList):
         return dolLib.distance(x1, y1, x, y) <= 10
     
     print 'Go to City %x' % (cityid)
-    while(dolScript.getLocationType(proc) == dolCallEnum.LocType.Dock):
-        dolCall.moveSea(proc)
-        time.sleep(0.5)
-    time.sleep(2)
+
     for x1, y1 in wayPointList:
         x, y = dolScript.getSeaPos(proc)
         log('Going to %d, %d' % (x1, y1))
@@ -44,7 +41,7 @@ def gotoCity(proc, cityid, wayPointList):
             
             
             
-            while(not isClose(x1, y1) and dolScript.getHPRatio(proc) < 0.4):
+            if(not isClose(x1, y1) and dolScript.getHPRatio(proc) < 0.4):
                 if(not dolScript.isOnline(proc)):
                     break
                     

@@ -17,6 +17,7 @@ class LocType:
     Dock = 0x1c # 码头
     LandDock = 0x20 # 登陆点
     Land = 0x10
+    Land2 = 0x13
     
 
 buyCountDict = {

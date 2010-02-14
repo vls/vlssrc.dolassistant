@@ -4,7 +4,7 @@ sys.path.append("..")
 import helper
 from dol import dolScript
 from helper import WindowHelper
-import win32api, win32gui, win32con
+import win32api, win32gui, win32con, win32process
 
 def getDolList():
     '''获取机器内所有大航海OL的信息
@@ -17,6 +17,11 @@ def getDolList():
         proc = WindowHelper.getProcByHwnd(hwnd)
         name = dolScript.getRoleName(proc)
         id = dolScript.getPCID(proc)
+        
+        threadID, processID = win32process.GetWindowThreadProcessId(hwnd)
+        pidstr = "%d / %xh" % (processID, processID) 
+        
+        win32gui.SetWindowText(hwnd, name + ' ' + pidstr)
         nameList.append((name, hwnd, id))
     
     return nameList

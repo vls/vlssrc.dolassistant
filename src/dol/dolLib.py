@@ -37,6 +37,8 @@ def turnPos(proc, x1, y1, e = 5):
     #print a1
         
     l = math.fabs(a1 - alpha)
+    if(l > 180):
+        l = 360 - l
     print "degree diff = %.3f" % (l)
     
     if (l > e):

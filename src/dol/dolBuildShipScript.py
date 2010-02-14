@@ -51,14 +51,7 @@ def buildShip(hwnd, proc, city, shipid, woodid, storage, ticketnum, day, onSea):
                     break
                 
                 log("open ticket")
-                dll.Key("KeyClick", hwnd, 0x77) #f8 放奖券
-                count = 0
-                while(not dolScript.isCustomOpen(proc) and count < 20):
-                    print 'wait for custom...'
-                    count += 1
-                    time.sleep(0.2)
-                time.sleep(0.5)
-                dll.Key("KeyClick", hwnd, 0x77) #f8 放奖券
+                dolCall.custom_safe(proc, 8)
                 ticket += 1
                 time.sleep(2)
             if(count % 10 == 0):

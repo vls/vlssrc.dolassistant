@@ -3,6 +3,7 @@ import pywintypes
 import win32gui, win32process, win32api, win32con
 import os
 import winnt
+import datetime
 
 
 class ProcessHelper:
@@ -79,5 +80,17 @@ class WindowHelper:
         threadID, processID = win32process.GetWindowThreadProcessId(hwnd) 
         hProc = win32api.OpenProcess(win32con.PROCESS_ALL_ACCESS, 0, processID)
         return hProc
-        
-        
+
+class ProcGuard:
+    def __init__(self, hwnd):
+        threadID, processID = win32process.GetWindowThreadProcessId(hwnd) 
+        self.proc = win32api.OpenProcess(win32con.PROCESS_ALL_ACCESS, 0, processID)
+        self.seq = self.proc.handle
+        print '%s : open process %d' % (datetime.datetime.now(), self.seq)
+    
+    def __del__(self):
+        ret = win32api.CloseHandle(self.proc)
+        if(ret == 0):
+            print 'Close fail. Error = %d' % (win32api.GetLastError())
+        else: 
+            print '%s : Close successfully %d' % (datetime.datetime.now(), self.seq)

@@ -12,7 +12,7 @@ import pywintypes
 import random
 import win32event
 import getopt
-from dol import dolCall, dolScript, dolFirmScript, dolLib, readMap
+from dol import dolCall, dolScript, dolFirmScript, dolLib, readMap, kaitu
 import dol
 from global_ import reloadMod
 
@@ -223,7 +223,7 @@ def main(argv=sys.argv):
         elif(optdict.has_key('-f')):
             funcName = optdict['-f']
             
-            modList = ['dol.readMap', 'dol.dolLib', 'dol.dolCall', 'dol.dolScript', 'dol.dolFirmScript']
+            modList = ['dol.kaitu', 'dol.readMap', 'dol.dolLib', 'dol.dolCall', 'dol.dolScript', 'dol.dolFirmScript']
             
             
             

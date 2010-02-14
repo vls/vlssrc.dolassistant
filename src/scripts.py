@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-from dol import dolScript, dolSafeCall, dolCallEnum, enum, dolCall
+from dol import dolScript, dolCallEnum, enum, dolCall
 import w32
 import helper
-from helper import WindowHelper, ProcessHelper
+from helper import WindowHelper, ProcessHelper, ProcGuard
 import time, datetime
 import win32con, win32api
 import pyqmacro
@@ -10,7 +10,7 @@ import dll
 from PyQt4 import QtCore, QtGui
 import threading
 import ctypes
-from dol import dolBuildShipScript
+from dol import dolBuildShipScript, readMap, readMapDta
 
 from dol.dolBuildShipData import *
 
@@ -89,7 +89,7 @@ def custom(hwnd, proc, num):
     '''
     print 'custom'
     
-    dolSafeCall.custom(proc, num)
+    dolCall.custom(proc, num)
     
 def testHwnd(hwnd):
     '''测试'''
@@ -110,7 +110,7 @@ def follow(hwnd, proc):
         print "[%d] 我是队长" % (hwnd)
         return
     
-    dolSafeCall.follow_safe(proc, party[0])
+    dolCall.follow(proc, party[0])
     print 'follow end'
     
     
@@ -119,7 +119,7 @@ def toDock(hwnd, proc):
     进入码头
     '''
 
-    dolSafeCall.move(proc, dolCallEnum.MoveTo.Dock)
+    dolCall.move(proc, dolCallEnum.MoveTo.Dock)
 
 def __enterCity_pre(window):
     result, value = __getInt(unicode('从哪里进入城市'), unicode('1=码头广场, 2=广场, 3=商业地区, 4=商务会馆'))
@@ -139,14 +139,14 @@ def enterCity(hwnd, proc, moveto):
     '''
     进入城市
     '''
-    dolSafeCall.move(proc, moveto)
+    dolCall.move(proc, moveto)
     
 def moveSea(hwnd, proc):
     '''
     出海
     '''
     
-    dolSafeCall.moveSea(proc)
+    dolCall.moveSea(proc)
 
 sailingLock = threading.Lock()
 
@@ -213,7 +213,7 @@ def sailing(hwnd, proc, hwndList = None):
             if(dolScript.isBadWeather(proc)):
                 log("遇到暴风")
                 while(dolScript.getSailState(proc) != 0):
-                    dolSafeCall.sail(proc, 0)
+                    dolCall.sail(proc, 0)
                     time.sleep(0.2)
                 
                 beep(unicode("警告"), unicode("遇到暴风!!!"))
@@ -226,7 +226,7 @@ def sailing(hwnd, proc, hwndList = None):
                 
                 log("[%s]发现<%s>,请求队长发动驱除技能" % (myname, statetxt)) 
                 dountil(dolScript.isNormal, [leadProc])
-                dolSafeCall.custom(leadProc, 4)#f4 驱除
+                dolCall.custom(leadProc, 4)#f4 驱除
                 time.sleep(2)
                 win32api.CloseHandle(leadProc)
             count += 1
@@ -237,7 +237,7 @@ def sailing(hwnd, proc, hwndList = None):
     
     
     print "sailing()"
-    sailingLock.acquire()
+    a = MutexGuard(sailingLock)
     print "Lock acquired"
     count = 0
     while(True):
@@ -259,7 +259,7 @@ def sailing(hwnd, proc, hwndList = None):
         if(dolScript.getCombat(proc) == 2): #被攻击
             log("停战")
             dountil(dolScript.isNormal, [proc])
-            dolSafeCall.custom(proc, 6) #f6 要设置为停战
+            dolCall.custom(proc, 6) #f6 要设置为停战
             time.sleep(0.3)
             
         
@@ -267,7 +267,7 @@ def sailing(hwnd, proc, hwndList = None):
         if(dolScript.isBadWeather(proc)):
             log("遇到暴风")
             while(dolScript.getSailState(proc) != 0):
-                dolSafeCall.sail(proc, 0)
+                dolCall.sail(proc, 0)
                 time.sleep(0.2)
             
             beep(unicode("警告"), unicode("遇到暴风!!!"))
@@ -283,7 +283,7 @@ def sailing(hwnd, proc, hwndList = None):
             log("要补行动力, 行动力 = %d" % (hp1))
             dountil(dolScript.isNormal, [proc])
             
-            dolSafeCall.custom(proc, 7) #f7 要设置为料理
+            dolCall.custom(proc, 7) #f7 要设置为料理
             time.sleep(2)
             hp2 = dolScript.getHP(proc)
             log("吃了一个料理, 行动力 = %d" % (hp2))
@@ -297,14 +297,14 @@ def sailing(hwnd, proc, hwndList = None):
         if(not dolScript.isAutoSail(proc) and dolScript.getSailState(proc) != 0 and dolScript.getWeather(proc) != stormWeather):
             log("操帆")
             dountil(dolScript.isNormal, [proc])
-            dolSafeCall.custom(proc, 1) #f1 要设置为操帆
+            dolCall.custom(proc, 1) #f1 要设置为操帆
             time.sleep(2)
             
         statetxt = dolScript.getShipState(proc)
         if(statetxt == "鼠患" or statetxt == "海藻"):
             log("发现<%s>,发动驱除技能" % (statetxt)) 
             dountil(dolScript.isNormal, [proc])
-            dolSafeCall.custom(proc, 4)#f4 驱除
+            dolCall.custom(proc, 4)#f4 驱除
             time.sleep(2) 
         
         
@@ -313,15 +313,17 @@ def sailing(hwnd, proc, hwndList = None):
         if(sCount != 3 and 75 not in sList): #75 == 警戒
             log("发动警戒技能") 
             dountil(dolScript.isNormal, [proc])
-            dolSafeCall.custom(proc, 3)#f3 警戒
+            dolCall.custom(proc, 3)#f3 警戒
             time.sleep(2)
             
             
-        if(sCount != 3 and 12 not in sList): #12 == 钓鱼
-            log("发动钓鱼技能")
-            dountil(dolScript.isNormal, [proc])
-            dolSafeCall.custom(proc, 2) #f2 钓鱼
-            time.sleep(2)
+        #=======================================================================
+        # if(sCount != 3 and 12 not in sList): #12 == 钓鱼
+        #    log("发动钓鱼技能")
+        #    dountil(dolScript.isNormal, [proc])
+        #    dolCall.custom(proc, 2) #f2 钓鱼
+        #    time.sleep(2)
+        #=======================================================================
         
         preFatigue = dolScript.getFatigue(proc)
         if(preFatigue > 40):
@@ -332,7 +334,7 @@ def sailing(hwnd, proc, hwndList = None):
                 
                 log("要消除疲劳, 疲劳 = %f" % (preFatigue))
                 dountil(dolScript.isNormal, [proc])
-                dolSafeCall.custom(proc, 7) #f7 要设置为料理
+                dolCall.custom(proc, 7) #f7 要设置为料理
                 fatigue = dolScript.getFatigue(proc)
                 time.sleep(2)
                 log("吃了一个料理, 疲劳 = %f" % (fatigue))
@@ -346,8 +348,6 @@ def sailing(hwnd, proc, hwndList = None):
             
         count += 1
         time.sleep(0.3)
-    sailingLock.Release()
-    print "Lock released"
 
 def __buildSmall(hwnd, proc, onSea):
     city = blt()
@@ -596,27 +596,53 @@ def __sellOne(hwnd, proc):
     else:
         print 'no tab!'
         
-def __testcrash(hwnd, proc):
-    bossid = 25166675
-    cityid = 68812849        
-    bossx, bossy = (36607, 18685)
-    #===========================================================================
-    # log("Enter dock")    
-    # dolCall.enterDoor(proc, cityid)
-    # log("Into city")
-    # while(dolScript.getLocationType(proc) != dolCallEnum.LocType.Dock):
-    #    log('wait... entering dock')
-    #    time.sleep(0.2)
-    #===========================================================================
-    while(dolScript.getLocationType(proc) != dolCallEnum.LocType.City):
-        log("Into city")
-        dolCall.move(proc, dolCallEnum.MoveTo.DockPlaza) # 码头广场
-        
+def readMapScript(hwnd, proc):
+    '''
+    读图
+    '''
+
     
-    print "%x" % (dolScript.getLocationType(proc))
-    print dolScript.getLocation(proc).encode('gbk')
-    dolCall.walk(proc, bossx, bossy)
-    #dolCall.talk(proc, bossid)
-    #time.sleep(2)
-    #dolCall.sellShip(proc, bossid)
-    #time.sleep(3)
+    serName = '圖書館人員A'
+    hwndList = window.getPlayerHwndList()
+    
+    myid = dolScript.getPCID(proc)
+    party = dolScript.getParty(proc)
+    
+
+    
+    
+    myname = dolScript.getRoleName(proc)
+    if(myname == serName):
+        return
+    
+    if(party != [] and myid != party[0]):
+        return
+    
+    
+    fellowList = []
+    serHwnd = -1
+    for hwnd in hwndList:
+        procGuard = ProcGuard(hwnd)
+        if (dolScript.getRoleName(procGuard.proc) == serName):
+            serHwnd = hwnd
+        else:
+            fid = dolScript.getPCID(procGuard.proc)
+            
+            if(party != [] and fid in party and fid != dolScript.getPCID(proc)):
+                fellowList.append(hwnd)
+    
+    if(serHwnd == -1):
+        print 'No servant!!!'
+        return
+    print myname
+    print fellowList
+    
+    
+    cRead = readMapDta.london()
+    cSec = readMapDta.duofo()
+    
+    cl = readMap.readMapClass(proc, cRead, cSec, serHwnd, '得到了教會祭器的地圖', fellowList)
+    cl.main()
+    
+    
+    
