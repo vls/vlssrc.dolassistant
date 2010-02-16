@@ -260,7 +260,7 @@ def sailing(hwnd, proc, hwndList = None):
             log("停战")
             dountil(dolScript.isNormal, [proc])
             dolCall.custom(proc, 6) #f6 要设置为停战
-            time.sleep(0.3)
+            time.sleep(2)
             
         
                     
@@ -298,14 +298,14 @@ def sailing(hwnd, proc, hwndList = None):
             log("操帆")
             dountil(dolScript.isNormal, [proc])
             dolCall.custom(proc, 1) #f1 要设置为操帆
-            time.sleep(2)
+            time.sleep(3)
             
         statetxt = dolScript.getShipState(proc)
         if(statetxt == "鼠患" or statetxt == "海藻"):
             log("发现<%s>,发动驱除技能" % (statetxt)) 
             dountil(dolScript.isNormal, [proc])
             dolCall.custom(proc, 4)#f4 驱除
-            time.sleep(2) 
+            time.sleep(3) 
         
         
         sCount, sList = dolScript.getSkill(proc) 
@@ -602,7 +602,7 @@ def readMapScript(hwnd, proc):
     '''
 
     
-    serName = '圖書館人員A'
+    serName = '圖書館人員B'
     hwndList = window.getPlayerHwndList()
     
     myid = dolScript.getPCID(proc)

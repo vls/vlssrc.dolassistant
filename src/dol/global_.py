@@ -138,8 +138,10 @@ def beep(title = "", message = ""):
         win32api.MessageBox(None, "Something wrong !!! (Please check the encoding of the file who raise the *beep*)", "Warning", win32con.MB_ICONERROR | win32con.MB_TOPMOST)
 
 def main():
-    logger = TextLogger('test.txt')
-    logger.log('123')
+    logger = TextLogger('test33333.txt')
+    li = [1, 2, 3]
+    logger.log(repr(li))
+    logger.log(str(li))
 
 if __name__ == "__main__":
     main()   

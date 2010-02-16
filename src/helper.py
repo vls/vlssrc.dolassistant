@@ -86,11 +86,10 @@ class ProcGuard:
         threadID, processID = win32process.GetWindowThreadProcessId(hwnd) 
         self.proc = win32api.OpenProcess(win32con.PROCESS_ALL_ACCESS, 0, processID)
         self.seq = self.proc.handle
-        print '%s : open process %d' % (datetime.datetime.now(), self.seq)
+        #print '%s : open process %d' % (datetime.datetime.now(), self.seq)
     
     def __del__(self):
         ret = win32api.CloseHandle(self.proc)
         if(ret == 0):
             print 'Close fail. Error = %d' % (win32api.GetLastError())
-        else: 
-            print '%s : Close successfully %d' % (datetime.datetime.now(), self.seq)
+        

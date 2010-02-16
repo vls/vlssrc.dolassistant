@@ -69,7 +69,7 @@ class mei5(art):
         self.churchEnterID = 0x80e00da
         self.reportEnterPos = (17524, 16325)
         self.reportEnterID = 0x80e00dd
-        self.reportPos = (2500, 4630)
+        self.reportPos = (2596, 4433)
         self.reportNPCID = 0x1800476
         self.reportOutID = 0xc0e010b
         self.kaiPos = (5863, 6999)

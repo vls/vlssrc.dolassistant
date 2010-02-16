@@ -2,12 +2,13 @@
 import dolCall, dolScript
 import kaituDta
 import time
-from global_ import log, dowhile, dountil, beep
+from global_ import log, dowhile, dountil, beep, TextLogger
 import sys
 sys.path.append('..')
 import dll
 import helper
 import win32con
+
 
 def kaitu(proc, dtaClass):
     hlper = helper.ProcessHelper()
@@ -43,7 +44,10 @@ def kaitu(proc, dtaClass):
             dolCall.custom_safe(proc, 4)
             
             statAddr = 0x00B72FB8
-            while(dolScript.getByte(proc, statAddr) < 2):
+            
+            statArr = []
+            
+            while(not dolScript.inLog(proc, '點經驗。', 2) and not dolScript.inLog(proc, '冒險等級上升到', 2) and not dolScript.inLog(proc, '冒險經驗值達到了', 2)):
                 
                 sub = '這附近好像有什麼東西'
                 if(dolScript.inLog(proc, sub, 2)):
@@ -53,6 +57,7 @@ def kaitu(proc, dtaClass):
                 if(dolScript.inLog(proc, '未能發現任何物品')):
                     if(not dolScript.inLog(proc, '開鎖失敗了')):    
                         __printLastLog()
+                        print "can't find any item"
                         __stopSkill()
                         beep('', '没图了！')
                         
@@ -61,11 +66,19 @@ def kaitu(proc, dtaClass):
                         dolCall.custom_safe(proc, 4)
                         
                 time.sleep(0.2)
+                
                 print 'wait ... %d' % (dolScript.getByte(proc, statAddr))
+                statArr.append(dolScript.getByte(proc, statAddr))
             print 'final wait ... %d' % (dolScript.getByte(proc, statAddr))
+            statArr.append(dolScript.getByte(proc, statAddr))
+            
+            logger = TextLogger('kaituLog.txt')
+            logger.log(repr(statArr))
+            
             if(dolScript.inLog(proc, '未能發現任何物品')):
                 if(not dolScript.inLog(proc, '開鎖失敗了')):  
                     __printLastLog() 
+                    print "can't find any item"
                     __stopSkill() 
                     beep('', '没图了！')
                     return
@@ -101,9 +114,10 @@ def kaitu(proc, dtaClass):
         
         dll.Key('KeyClick', hwnd, win32con.VK_RETURN)
         time.sleep(1)
-        dowhile(dolScript.isDialogOpen, [proc])
-        dll.Key('KeyClick', hwnd, win32con.VK_RETURN)
-        time.sleep(2)
+        while(not dolScript.inLog(proc, '已經做了報告。', 2) and not dolScript.inLog(proc, '點聲望', 2) ):
+            
+            dll.Key('KeyClick', hwnd, win32con.VK_RETURN)
+            time.sleep(1)
         
         dolCall.enterDoor(proc, dtaClass.reportOutID)
         x, y = dtaClass.churchPos

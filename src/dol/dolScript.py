@@ -622,13 +622,12 @@ if __name__ == "__main__":
         print '船耐久 = %d' % (getShipHP(pro))
         print '金钱 = %d' % (getMoney(pro))
 
-        print "%s %s" % (getInt(pro, ADDR.DIALOG) != 0, not isReading(pro))
-        print "%x" % (win32con.MB_ICONINFORMATION)
-        print "%x" % (win32con.MB_SETFOREGROUND)
-        print "%x" % (win32con.MB_ICONINFORMATION | win32con.MB_TOPMOST | win32con.MB_SYSTEMMODAL | win32con.MB_SETFOREGROUND)
-        print inLog(pro, '未能發現任何物品')
-        print not inLog(pro, '開鎖失敗了')
         
+        print inLog(pro, '已經做了報告。', 2)
+        print not inLog(pro, '開鎖失敗了')
+        logList = readLog(pro, 10)
+        for log in logList:
+            print log
         #readLog(pro)
 #        while(True):
 #            print '海洋坐标: x=%.3f, y=%.3f' % getSeaPos(pro, (0x400, 0xbff))

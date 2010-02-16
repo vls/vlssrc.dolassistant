@@ -20,6 +20,7 @@ from global_ import MutexGuard
 import threading
 
 mutex = threading.Lock()
+msgBoxMutex = threading.RLock()
 
 
 class readMapClass(rtBaseClass):
@@ -73,6 +74,30 @@ class readMapClass(rtBaseClass):
             procGuard = helper.ProcGuard(_hwnd)
             dolCall.writeMem(procGuard.proc, statusAddr, dolCall.c_uint(0))
         
+        def __whenRead():
+            log('讀到圖')
+            bossid = dolScript.getPCID(proc)
+            dolCall.openDialog(proc, bossid, 0x20)
+            myname = dolScript.getRoleName(proc)
+            dountil(dolScript.isDialogOpen, [proc])
+            
+            l = MutexGuard(msgBoxMutex)
+            msgBox(myname, '读到图。准备弹出窗口……')
+            
+            win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+            win32gui.SetActiveWindow(hwnd)
+            
+            win32gui.SetForegroundWindow(hwnd)
+            msgBox(myname, '请在摆好露天后点击确定。（将会有购买窗口弹出……）')
+            dowhile(dolScript.isDialogOpen, [proc])
+            win32gui.ShowWindow(hwnd, win32con.SW_MINIMIZE)
+            
+            
+            tarhwnd = self.serHwnd
+            
+            self.makeBuy(tarhwnd, hwnd)
+            print 'one read loop end'
+        
         x, y = self.cityRead.toReadPos
         if(dolScript.getLandFollow(proc) == 0):
             dolCall.walk(proc, x, y)
@@ -111,7 +136,7 @@ class readMapClass(rtBaseClass):
             #547, 240
             
             while(True):
-                print 'reading... (Money = %d)' % (dolScript.getMoney(proc))
+                print '[' + myname + ('] reading... (Money = %d)' % (dolScript.getMoney(proc)))
                 if(dolScript.inLog(proc, '頭腦疲勞', 3)):
                     log('疲勞了...')
                     startTime = time.time()
@@ -123,7 +148,7 @@ class readMapClass(rtBaseClass):
                         okFellowDict = {}
                         if(len(self.fellowList) > 0):
                             while(True):
-                                if(len(okFellowDict) == len(self.fellowList) or time.time() - startTime > 120):
+                                if(len(okFellowDict) == len(self.fellowList)):
                                     #timeout一分钟也走人
                                     log('全部疲倦了，走人')
                                     return
@@ -144,25 +169,7 @@ class readMapClass(rtBaseClass):
                 
                 
                 if(dolScript.inLog(proc, self.readMsg, 3)):
-                    log('讀到圖')
-                    bossid = dolScript.getPCID(proc)
-                    dolCall.openDialog(proc, bossid, 0x20)
-                    myname = dolScript.getRoleName(proc)
-                    dountil(dolScript.isDialogOpen, [proc])
-                    msgBox(myname, '读到图。准备弹出窗口……')
-                    
-                    win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
-                    win32gui.SetActiveWindow(hwnd)
-                    
-                    win32gui.SetForegroundWindow(hwnd)
-                    msgBox(myname, '请在摆好露天后点击确定。（将会有购买窗口弹出……）')
-                    dowhile(dolScript.isDialogOpen, [proc])
-                    win32gui.ShowWindow(hwnd, win32con.SW_MINIMIZE)
-                    time.sleep(1)
-                    
-                    tarhwnd = self.serHwnd
-                    
-                    self.makeBuy(tarhwnd, hwnd)
+                    __whenRead()
                     break
                     
                 time.sleep(0.2)
@@ -186,12 +193,15 @@ class readMapClass(rtBaseClass):
         dolCall.openDialog(tarproc, myid, 0x32)
         dountil(dolScript.isDialogOpen, [tarproc])
         
+        l = MutexGuard(msgBoxMutex)
+        
         win32gui.ShowWindow(tarhwnd, win32con.SW_RESTORE)
         win32gui.SetActiveWindow(tarhwnd)
         win32gui.SetForegroundWindow(tarhwnd)
         msgBox(tarname, '請購買 [' + myname + '] 的露天……')
         win32gui.ShowWindow(tarhwnd, win32con.SW_MINIMIZE)
-        time.sleep(2)
+        dowhile(dolScript.isDialogOpen, [proc])
+        print 'makeBuy end'
         
     
     def toReadDock(self):

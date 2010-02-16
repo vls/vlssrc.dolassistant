@@ -13,6 +13,9 @@ import win32gui
 import win32api
 import csv
 from threadpool import ThreadPool, WorkRequest
+import threading
+import dol
+MutexGuard = dol.global_.MutexGuard
 
 def dountil(callback, condition ,  args = [], interval = 0.1):
     while(condition):
@@ -72,6 +75,33 @@ def testRAII():
         print a.proc
         
     print 'finish'
+
+mutex = threading.RLock()
+
+def rlockfunc():
+    def func():
+        print 'inner loop begin'
+        l = MutexGuard(mutex)
+        #time.sleep(0.5)
+        print 'inner loop end'
+    
+    for i in range(3):
+        while(True):
+            
+            func()
+            
+            
+            break
+        #time.sleep(0.5)
+        #print 'explict release'
+        #l.__del__()
+        print 'outter loop end'
+
+def testRlock():
+    l = MutexGuard(mutex)
+    print 'testRlock() acquired'
+    rlockfunc()
+    
 def main2():
     wri = csv.writer(open('test.csv', 'w'))
     strList = [('123', 456, 'sss')]
@@ -79,4 +109,4 @@ def main2():
     wri.writerows(strList)
 
 if __name__ == "__main__":
-    main()
+    testRlock()
